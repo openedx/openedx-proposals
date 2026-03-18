@@ -1,15 +1,15 @@
-.. _OEP-68 Naming Identifiers:
+.. _OEP-68 Resource Identifiers:
 
-OEP-68: Naming Identifiers
-###########################
+OEP-68: Resource Identifiers
+##############################
 
 .. list-table::
    :widths: 25 75
 
    * - OEP
-     - :ref:`OEP-0068 <OEP-68 Naming Identifiers>`
+     - :ref:`OEP-0068 <OEP-68 Resource Identifiers>`
    * - Title
-     - Naming Identifiers
+     - Resource Identifiers
    * - Last Modified
      - 2026-03-18
    * - Authors
@@ -36,7 +36,7 @@ OEP-68: Naming Identifiers
 Abstract
 ********
 
-Open edX code uses several distinct types of identifiers. To make code unambiguous and readable, we adopt consistent naming conventions for each type. This OEP defines five categories of identifiers—Primary Keys, OpaqueKeys, Codes, UUIDs, and Other—and specifies the naming conventions for each. These conventions apply across Python code, database column names, REST API fields, event schemas, and any other context where identifiers appear.
+Open edX code uses several distinct types of resource identifiers. To make code unambiguous and readable, we adopt consistent naming conventions for each type, and provide guidance on when each type should be used. This OEP defines five categories of identifiers—Primary Keys, OpaqueKeys, Codes, UUIDs, and Other—and specifies the naming conventions for each. These conventions apply across Python code, database column names, REST API fields, event schemas, and any other context where identifiers appear.
 
 Motivation
 **********
@@ -78,7 +78,7 @@ Summary
      - ``str``
      - ``*_key_string`` (or ``*_key`` when unambiguous)
    * - Code
-     - Locally-scoped slug-like string
+     - Locally-scoped slug-like string component of an OpaqueKey
      - ``str``
      - ``*_code``
    * - UUID
@@ -93,9 +93,11 @@ Summary
 Primary Keys
 ============
 
-Every Django model uses ``django.db.models.BigAutoField`` as its primary key. This is an auto-incremented integer assigned by the database and meaningful only within that database; it should not be used as a stable cross-service or cross-instance identifier.
+Every Django model uses ``django.db.models.BigAutoField`` as its primary key. This is an auto-incremented integer assigned by the database and meaningful only within that database; it is not a stable cross-service or cross-instance identifier.
 
-The preferred name for a primary key is ``pk`` (for the key of the current model) or ``<entity>_pk`` for foreign references. The suffix ``_pk`` makes it immediately clear that the value is a database-internal integer, not a globally meaningful identifier.
+**When to use**: Primary keys are the default choice for referencing database rows. Prefer them over OpaqueKeys when query efficiency is a concern, and *always* use primary keys for foreign key relationships on Django models. When readability matters more than efficiency—such as in logs, URLs, admin views, reporting, events, REST APIs, and advanced user interfaces—consider using an OpaqueKey instead.
+
+**How to name**: The preferred name for a primary key is ``pk`` (for the key of the current model) or ``<entity>_pk`` for foreign references. The suffix ``_pk`` makes it immediately clear that the value is a database-internal integer, not a globally meaningful identifier.
 
 .. code-block:: python
 
@@ -114,9 +116,11 @@ The names ``id`` and ``<entity>_id`` are historically common in Open edX code an
 OpaqueKeys
 ==========
 
-An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is a parsed Python object that globally and stably identifies a resource across an entire Open edX instance. OpaqueKeys are serialized with a key-type prefix followed by a colon (e.g. ``course-v1:``, ``lb:``).
+An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is a parsed Python object that globally identifies a resource across an entire Open edX instance. OpaqueKeys are serialized with a key-type prefix followed by a colon (e.g. ``course-v1:``, ``lb:``).
 
-Variables and fields holding a parsed ``OpaqueKey`` object should use the suffix ``_key``.
+**When to use**: Use OpaqueKeys when identifier readability matters—for example, in logs, URLs, admin views, reporting, events, REST APIs, and advanced user interfaces. When the same resource has both a primary key and an OpaqueKey, prefer the primary key for database queries and foreign key references (for query efficiency), and prefer the OpaqueKey where human readability is valuable.
+
+**How to name**: Variables and fields holding a parsed ``OpaqueKey`` object should use the suffix ``_key``.
 
 .. code-block:: python
 
@@ -165,7 +169,9 @@ Codes
 
 A code is a short, locally-scoped string identifier. Codes follow slug rules: they consist only of alphanumeric characters, hyphens, and underscores (equivalent to Django's ``SlugField``). They are case-sensitive. Unlike OpaqueKeys, codes are not globally unique on their own; they identify a resource or aspect of a resource *within some enclosing context*.
 
-Codes are the building blocks of OpaqueKeys. For example, the serialized ``UsageKey`` ``"lb:Axim:ChemLib:problem:Atoms6"`` is composed of the prefix ``lb:`` and the following codes:
+**When to use**: Codes almost always exist as components that are composed into an OpaqueKey. If you find yourself reaching for a code-like identifier that is *not* destined to become part of an OpaqueKey, consider whether one of the other identifier types is more appropriate.
+
+**How to name**: Variables and fields holding a code should use the suffix ``_code``. Codes are the building blocks of OpaqueKeys. For example, the serialized ``UsageKey`` ``"lb:Axim:ChemLib:problem:Atoms6"`` is composed of the prefix ``lb:`` and the following codes:
 
 .. code-block:: python
 
@@ -174,18 +180,16 @@ Codes are the building blocks of OpaqueKeys. For example, the serialized ``Usage
    type_code = "problem"
    block_code = "Atoms6"
 
-Variables and fields holding a code should use the suffix ``_code``.
-
-.. code-block:: python
-
    def get_library(org_code: str, library_code: str) -> ContentLibrary: ...
 
 UUIDs
 =====
 
-A UUID (Universally Unique Identifier) is a 128-bit identifier that uniquely identifies a resource across *all* Open edX instances, not just within one. UUIDs are suitable for use as stable identifiers in cross-instance contexts such as event data, external integrations, and shared databases.
+A UUID (Universally Unique Identifier) is a 128-bit identifier that uniquely identifies a resource across *all* Open edX instances. Unlike primary keys and OpaqueKeys, UUIDs are not scoped to a single database or instance.
 
-The preferred Python type for a UUID is ``uuid.UUID``. Variables and fields holding a UUID should use the suffix ``_uuid``.
+**When to use**: Use UUIDs when you need a stable identifier that remains meaningful across Open edX instances—for example, in cross-instance event data, external integrations, and shared databases. If the identifier only needs to be unique within a single instance, an OpaqueKey or primary key is more appropriate.
+
+**How to name**: The preferred Python type for a UUID is ``uuid.UUID``. Variables and fields holding a UUID should use the suffix ``_uuid``.
 
 .. code-block:: python
 
@@ -231,7 +235,9 @@ Other Identifiers
 
 Not every identifier fits neatly into one of the above categories. When an identifier does not, choose a name that does not use any of the suffixes ``_pk``, ``_key``, ``_key_string``, ``_code``, ``_uuid``, or ``_uuid_string``, so that readers are not misled into assuming a type or scope that does not apply.
 
-For inspiration, consider the ``refname`` field on ``PublishableEntity`` objects in ``openedx-learning``. A ``refname`` correlates a database entity with its representation in off-platform or cross-platform ZIP archives. It is not a primary key (which would be database-specific), not a code (because it may contain non-slug characters), and not an OpaqueKey (because it cannot be parsed into a globally-scoped identifier). By choosing the name ``refname``—which collides with none of the conventions above—the code signals clearly that this identifier is its own distinct thing.
+**When to use**: Use this guidance when you have confirmed that an identifier does not fit any of the four named categories above. Before settling on a novel identifier type, consider whether a primary key, OpaqueKey, code, or UUID would serve the purpose.
+
+**How to name**: Choose a name that is evocative of the identifier's specific meaning and that does not collide with any of the conventions above. For inspiration, consider the ``refname`` field on ``PublishableEntity`` objects in ``openedx-learning``. A ``refname`` correlates a database entity with its representation in off-platform or cross-platform ZIP archives. It is not a primary key (which would be database-specific), not a code (because it may contain non-slug characters), and not an OpaqueKey (because it cannot be parsed into a globally-scoped identifier). By choosing the name ``refname``—which collides with none of the conventions above—the code signals clearly that this identifier is its own distinct thing.
 
 Rationale
 *********
