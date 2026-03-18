@@ -106,7 +106,7 @@ The names ``id`` and ``<entity>_id`` are historically common in Open edX code an
 OpaqueKeys
 ==========
 
-An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is a parsed Python object that globally and stably identifies a resource across an entire Open edX instance. OpaqueKeys are serialized with a type prefix followed by a colon (e.g. ``course-v1:``, ``lb:``) and are meaningfully exchangeable across services and instances.
+An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is a parsed Python object that globally and stably identifies a resource across an entire Open edX instance. OpaqueKeys are serialized with a key-type prefix followed by a colon (e.g. ``course-v1:``, ``lb:``).
 
 Variables and fields holding a parsed ``OpaqueKey`` object should use the suffix ``_key``.
 
@@ -118,6 +118,8 @@ Variables and fields holding a parsed ``OpaqueKey`` object should use the suffix
    collection_key: LibraryCollectionLocator = ...
 
    def get_course(course_key: CourseKey) -> CourseOverview: ...
+
+Please note that, for historical reasons, concrete OpaqueKey subclasses use the suffix ``Locator`` instead of ``Key``. For all intents and purposes, this distinction can be ignored by consumers. They are all ``_keys``. In the future, we will unify all OpaqueKey classes to be named ``*Key``.
 
 .. _openedx/opaque-keys: https://github.com/openedx/opaque-keys
 
