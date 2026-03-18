@@ -36,7 +36,7 @@ OEP-68: Naming Identifiers
 Abstract
 ********
 
-Open edX code uses several distinct types of identifiers. To make code unambiguous and readable, we adopt consistent naming conventions for each type. This OEP defines four categories of identifiers—Primary Keys, OpaqueKeys, Codes, and OpaqueKey Strings—and specifies the naming conventions for each. These conventions apply across Python code, database column names, REST API fields, event schemas, and any other context where identifiers appear.
+Open edX code uses several distinct types of identifiers. To make code unambiguous and readable, we adopt consistent naming conventions for each type. This OEP defines four categories of identifiers—Primary Keys, OpaqueKeys, OpaqueKey Strings, and Codes—and specifies the naming conventions for each. These conventions apply across Python code, database column names, REST API fields, event schemas, and any other context where identifiers appear.
 
 Motivation
 **********
@@ -135,8 +135,16 @@ When there is any ambiguity about whether a value is a parsed ``OpaqueKey`` obje
        usage_key = serializers.CharField()
 
    # Ambiguous context: use *_key_string to distinguish from the parsed object
-   def resolve_usage_key(usage_key_string: str) -> UsageKey:
-       return UsageKey.from_string(usage_key_string)
+   def _get_context_key_if_valid(serializer) -> LearningContextKey | None:
+       usage_key_string = serializer.cleaned_data.get('usage_key')
+       if not usage_key_string:
+           return None:
+       try:
+           return UsageKey.from_string(usage_key_string).context_key
+       except InvalidKeyError:
+           return None
+
+Please note that OpaqueKeys Strings should only be used at the boundaries of the platform (REST APIs, external events, logging, etc.). Within the system, parsed OpaqueKey objects are always preferred, as they protect against serializationd-deserializatione errors and provide type safety.
 
 Codes
 =====
