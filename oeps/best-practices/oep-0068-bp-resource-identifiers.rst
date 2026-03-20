@@ -9,7 +9,7 @@ OEP-68: Learning Content Identifiers
    * - OEP
      - :ref:`OEP-0068 <OEP-68 Resource Identifiers>`
    * - Title
-     - Resource Identifiers
+     - Learning Content Identifiers
    * - Last Modified
      - 2026-03-18
    * - Authors
@@ -52,11 +52,8 @@ Motivation
 **********
 
 Identifiers are ubiquitous: they appear as Python variables, function parameters, Django model
-fields, database columns, REST API fields, and event data schemas.
-
-To avoid subtle issues with performance, portability, and correctness, we must be careful to
-use the correct kind of identifier building content data models or referencing content.
-For example:
+fields, database columns, REST API fields, and event data schemas. It's important to choose
+the right identifier for the right job. For example:
 
 * Including Open edX instance-specific information in an identifier can cause content to
   break when it's transferred to other instances. For example, exporting course content with
@@ -68,8 +65,7 @@ For example:
   media files from course run X to course run Y, the transfer format must describe the
   component-media relationships *without* reference to the course run keys for X or Y,
   otherwise the copied component in Y may erronously try to reference media files from 
-  course run X (or, we'd have to complicate the pasting code with special logic to strip
-  the identifiers of reference to X, which is likely to be confusing and brittle).
+  course run X.
 
 * Mingling version-aware and version-agnostic identifiers can lead to unexpected lookup failures.
   For example, if learner-facing code queries a course run cache for the latest content without
@@ -95,14 +91,14 @@ tracking events, legacy untyped Python modules, and logs). So, this OEP aims to:
 Specification
 *************
 
-There are five recognized categories of identifier in Open edX code. When naming an identifier,
-first determine which category it belongs to, then apply the naming convention for that category. If
-an identifier does not fit any category, choose a name that does not collide with any of the five
-conventions, so that readers are not misled.
+Here are five recognized categories of learning content identifier in Open edX code.
+When using an identifier, first determine which category it belongs to, then consider
+if it's appropriate for the job at hand. Finally, apply the appropriate naming convention,
+as long as doing is backwards compatible and consistent with surrounding code (some judgement required here).
 
-These conventions apply wherever identifiers are named: Python variables, parameters, and
-attributes; Django model field names and database column names; REST API request and response field
-names; and event data schema fields.
+These conventions apply wherever Open edX learning content is referenced: Python variables, JS
+variables, Django model field names, REST API arguments, event schema fields, admin interfaces,
+application logs, and so on.
 
 Summary
 =======
@@ -121,25 +117,19 @@ Summary
      - * ``id``, ``*_id`` on the model.
        * ``pk``, ``*_pk`` everywhere else.
    * - Code
-     - Locally-scoped slug-like string component of an OpaqueKey
+     - Locally-scoped slug-like string
      - ``str``
-     - ``*_code``
+     - * ``*_code``
    * - OpaqueKey
-     - Parsed key object scoped to one Open edX instance
+     - Codes composed together into a semi-readable instance-wide identifier
      - subclass of ``OpaqueKey``
-     - * ``*_key``
-   * - OpaqueKey String
-     - Serialized form of an OpaqueKey
-     - ``str``
-     - ``*_key_string`` (or ``*_key`` when unambiguous)
+     - * ``*_key`` for parsed OpaqueKey objects
+       * ``*_key`` or ``*_key_string`` for serialized OpaqueKey strings
    * - UUID
      - Globally unique identifier scoped across all Open edX instances
      - ``uuid.UUID``
-     - ``*_uuid``
-   * - UUID String
-     - Serialized form of a UUID
-     - ``str``
-     - ``*_uuid_string`` (or ``*_uuid`` when unambiguous)
+     - * ``*_uuid`` for parsed UUID objects
+       * ``*_uuid`` or ``*_uuid_string`` for serialized UUID strings
 
 Integer Primary Keys
 ====================
@@ -237,10 +227,25 @@ For example:
 **When to use**: Integer primary keys and OpaqueKeys both uniquely identify a resource across an
 Open edX instance. When choosing between the two, consider the following:
 
-* Blah
+* Integer primary keys are by far the most efficient and reliable method to relate tables within a database.
+* When displayed, OpaqueKeys provide more information. This can be good in cases where quasi-readability
+  matters, such as URLs, error logs, event data, and UIs for admins and power-users.
+* Because they are human-readable, site admins may want to change the code identifying a piece of content,
+  which would break any OpaqueKey reference to that content. This generally doesn't happen, but by limiting
+  the number of internal OpaqueKey references, we make the platform more flexible to support these sort
+  of operations (e.g. changing a course's run code) in the future.
 
-**How to name**: Variables and fields holding a parsed ``OpaqueKey`` object should use the suffix
-``_key``.
+**How to name**: 
+
+* Python variables and attributes holding a parsed ``OpaqueKey`` object should use the suffix ``_key``.
+* Fields which marshal between OpaqueKey objects and their serialized strings, such as Django Model
+  Fields or Serializer Fields, should also use the suffix ``_key``.
+* REST APIs, event data fields, or other external serializations of OpaqueKeys should all also use
+  the suffix ``_key``.
+* When parsed ``OpaqueKey`` objects and serialized key strings co-exist in the same context,
+  such as a parsing function, use the suffix ``_key_string`` to disambiguate serialized strings.
+* Frontend variables should use the suffix ``*Key``. The suffix ``*KeyString`` is not necessary,
+  because parsed OpaqueKeys do not exist on the frontend.
 
 .. code-block:: python
 
@@ -251,47 +256,16 @@ Open edX instance. When choosing between the two, consider the following:
 
    def get_course(course_key: CourseKey) -> CourseOverview: ...
 
-Please note that, for historical reasons, concrete OpaqueKey subclasses use the suffix ``Locator``
+Please note that it's preferrable to pass around the parsed ``OpaqueKey`` object
+whenever it's available--compared to the serialized key string, it's more
+type-safe and centralizes all the parsing logic. Developers are also encouraged to use
+``OpaqueKey`` subclasses as type annotations wherever appropriate.
+
+Hint: For historical reasons, concrete OpaqueKey subclasses use the suffix ``Locator``
 instead of ``Key``. For all intents and purposes, this distinction can be ignored by consumers. They
 are all ``_keys``. In the future, we will unify all OpaqueKey classes to be named ``*Key``.
 
 .. _openedx/opaque-keys: https://github.com/openedx/opaque-keys
-
-OpaqueKey Strings
------------------
-
-The serialized (string) form of an OpaqueKey is distinct from the parsed object. When the context
-makes it unambiguous that the value is a string—such as inside a Django form, serializer, or REST
-API field—it is acceptable to use ``*_key`` for the serialized form as well.
-
-When there is any ambiguity about whether a value is a parsed ``OpaqueKey`` object or its string
-serialization, use the suffix ``*_key_string`` to make the distinction explicit.
-
-.. code-block:: python
-
-   # Unambiguous context (serializer field): *_key is fine
-   class BlockSerializer(serializers.Serializer):
-       usage_key = serializers.CharField()
-
-   # Ambiguous context: use *_key_string to distinguish from the parsed object
-   def _get_context_key_if_valid(serializer) -> LearningContextKey | None:
-       usage_key_string = serializer.cleaned_data.get('usage_key')
-       if not usage_key_string:
-           return None
-       try:
-           return UsageKey.from_string(usage_key_string).context_key
-       except InvalidKeyError:
-           return None
-
-Please note that OpaqueKey Strings should only be used at the boundaries of the platform (REST APIs,
-external events, logging, etc.). Within the system, parsed OpaqueKey objects are always preferred,
-as they protect against serialization-deserialization errors and provide type safety.
-
-.. note::
-
-   On the frontend, parsed ``OpaqueKey`` objects are not available; OpaqueKeys are always plain
-   strings. Therefore, a ``*KeyString`` suffix is not needed in frontend code—``*Key`` is always
-   acceptable.
 
 UUIDs
 =====
@@ -300,58 +274,20 @@ A UUID (Universally Unique Identifier) is a 128-bit identifier that uniquely ide
 across *all* Open edX instances. Unlike primary keys and OpaqueKeys, UUIDs are not scoped to a
 single database or instance.
 
-**When to use**: Use UUIDs when you need a stable identifier that remains meaningful across Open edX
-instances—for example, in cross-instance event data, external integrations, and shared databases. If
-the identifier only needs to be unique within a single instance, an OpaqueKey or primary key is more
-appropriate.
+**When to use**: Use UUIDs when you want to give an object an identity that is unique across all
+Open edX instances.
 
-**How to name**: The preferred Python type for a UUID is ``uuid.UUID``. Variables and fields holding
-a UUID should use the suffix ``_uuid``.
+**How to name**:
 
-.. code-block:: python
-
-   import uuid
-
-   discussion_uuid: uuid.UUID = thread.uuid
-   enrollment_uuid: uuid.UUID = enrollment.uuid
-
-   def get_discussion_thread(discussion_uuid: uuid.UUID) -> DiscussionThread: ...
-
-   class DiscussionThread(models.Model):
-       uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-
-UUID Strings
-------------
-
-The serialized (string) form of a UUID is distinct from the ``uuid.UUID`` object. When the context
-makes it unambiguous that the value is a string—such as inside a Django serializer or REST API
-field—it is acceptable to use ``*_uuid`` for the serialized form as well.
-
-When there is any ambiguity about whether a value is a ``uuid.UUID`` object or its string
-serialization, use the suffix ``*_uuid_string`` to make the distinction explicit.
-
-.. code-block:: python
-
-   # Unambiguous context (serializer field): *_uuid is fine
-   class ThreadSerializer(serializers.Serializer):
-       discussion_uuid = serializers.UUIDField()
-
-   # Ambiguous context: use *_uuid_string to distinguish from the UUID object
-   def _get_thread_by_discussion(discussion_uuid_string: str) -> DiscussionThread:
-       try:
-           discussion_uuid = uuid.UUID(discussion_uuid_string)
-       except ValueError:
-           raise BadDiscussionUUID(discussion_uuid)
-       return DiscussionThread.objects.get(uuid=discussion_uuid)
-
-As with OpaqueKey Strings, UUID Strings should only be used at the boundaries of the platform.
-Within the system, ``uuid.UUID`` objects are always preferred.
-
-.. note::
-
-   On the frontend, ``uuid.UUID`` objects are not available; UUIDs are always plain strings.
-   Therefore, a ``*UuidString`` suffix is not needed in frontend code—``*Uuid`` is always
-   acceptable.
+* Python variables and attributes holding a parsed ``uuid.UUID`` object should use the suffix ``_uuid``.
+* Fields which marshal between UUID objects and their serialized strings, such as Django Model
+  Fields or Serializer Fields, should also use the suffix ``_uuid``.
+* REST APIs, event data fields, or other external serializations of UUIDs should all also use
+  the suffix ``_uuid``.
+* When parsed UUID objects and serialized UUID strings co-exist in the same context,
+  such as a parsing function, use the suffix ``_uuid_string`` to disambiguate serialized strings.
+* Frontend variables should use the suffix ``*Uuid``. The suffix ``*UuidString`` is not necessary,
+  because parsed UUID objects are not used in Open edX frontend code.
 
 Other Identifiers
 =================
@@ -361,20 +297,17 @@ choose a name that does not use any of the suffixes ``_pk``, ``_key``, ``_key_st
 ``_uuid``, or ``_uuid_string``, so that readers are not misled into assuming a type or scope that
 does not apply.
 
-TODO mention version numbers
-
-**When to use**: Use this guidance when you have confirmed that an identifier does not fit any of
-the four named categories above. Before settling on a novel identifier type, consider whether a
-primary key, OpaqueKey, code, or UUID would serve the purpose.
-
-**How to name**: Choose a name that is evocative of the identifier's specific meaning and that does
-not collide with any of the conventions above. For inspiration, consider the ``refname`` field on
-``PublishableEntity`` objects in ``openedx-learning``. A ``refname`` correlates a database entity
-with its representation in off-platform content archives. It is not a primary key (which would be
-database-specific), not a code (because it may contain non-slug characters), and not an OpaqueKey
-(because it cannot be parsed into a globally-scoped identifier). By choosing the name
-``refname``—which collides with none of the conventions above—the code signals clearly that this
-identifier is its own distinct thing.
+Examples:
+* The ``refname`` field on ``PublishableEntity`` objects in ``openedx-core``. A ``refname``
+  correlates a database entity
+  with its representation in off-platform content archives. It is not a primary key (which would be
+  database-specific), not a code (because it may contain non-slug characters), and not an OpaqueKey
+  (because it cannot be parsed into a globally-scoped identifier). By choosing the name
+  ``refname``—which collides with none of the conventions above—the code signals clearly that this
+  identifier is its own distinct thing.
+* The integer ``version_num`` is used as part of the identity several version-aware content models.
+  It is like a Code, because it identifies a thing (a version) within a local context (a versioned entity).
+  However, it's not a string, so we don't use the suffix ``_code``.
 
 Rationale
 *********
@@ -391,17 +324,12 @@ is a plain string rather than a Python object.
 Backward Compatibility
 **********************
 
-Much existing Open edX code uses ``id`` and ``_id`` suffixes for primary keys, and some code uses
-``_key`` for both parsed OpaqueKey objects and their string serializations without distinction. This
-OEP does not require renaming existing identifiers; that would be a large and risky churn. New code
-should follow these conventions, and existing code may be updated opportunistically during
-refactors.
+TBC
 
 Reference Implementation
 ************************
 
-The conventions in this OEP reflect and formalize naming patterns already in use in several Open edX
-repositories, including ``openedx-learning`` and ``openedx-content-libraries``.
+TBC
 
 Rejected Alternatives
 *********************
@@ -413,6 +341,8 @@ name.
 **Using** ``_key`` **for all string identifiers**: Overloading ``_key`` to mean "any string that
 identifies something" would eliminate the useful distinction between globally-scoped OpaqueKeys,
 locally-scoped codes, and serialized vs. parsed representations.
+
+TODO Finish
 
 Change History
 **************
