@@ -316,7 +316,7 @@ Columns should store only exactly what the name describes
 
 - The name of a column in a table should accurately describe the data in that table.
 
-- If a column is named course_id it should only store the course's primary key.
+- If a column is named ``course_id`` it should only store the course's primary key.
   Not a string course run key, not a UUID. For more details on naming content identifiers,
   see :ref:`OEP-68 Learning Content Identifiers`_.
 
