@@ -7,7 +7,7 @@ OEP-68: Learning Content Identifiers
    :widths: 25 75
 
    * - OEP
-     - :ref:`OEP-0068 <OEP-68 Resource Identifiers>`
+     - :ref:`OEP-0068 <OEP-68 Learning Content Identifiers>`
    * - Title
      - Learning Content Identifiers
    * - Last Modified
@@ -328,11 +328,11 @@ The ``_key_string`` and ``_uuid_string`` conventions were chosen over alternativ
 or ``_uuid_str`` for readability. The word "string" more clearly signals to a reader that the value
 is a plain string rather than a Python object.
 
-Consequces & Backward Compatibility
-************************************
+Consequences & Backward Compatibility
+*************************************
 
-tart: New conventions
-#######################
+Start: New conventions
+======================
 
 * ``_pk`` for integer primary key variables.
 * ``_key_string`` and ``_uuid_string`` for stringified OpaqueKeys and UUIDs.
@@ -340,7 +340,7 @@ tart: New conventions
 * ``BlockRef`` and ``block_ref`` for 2-tuples of ``(type_code, block_code)``
 
 Stop: Old patterns to drop
-##########################
+==========================
 
 * ``_id`` for OpaqueKeys (e.g. ``course_id``)
 * ``_id`` for codes (e.g., ``block_id``)
@@ -348,14 +348,14 @@ Stop: Old patterns to drop
 * In OpaqueKeys, ``*Locator`` classes will be renamed to ``*Key``
  
 Continue: Already widely adopted
-################################
+================================
 
 * ``id`` field on models for integer primary keys.
 * ``_key`` for OpaqueKey objects.
 * ``_uuid`` for UUID objects.
 
 Migration plan
-##############
+==============
 
 * The guidance above applies immediately to new code.
 * Start retroactively applying guidance ``openedx-core``, which has few references to update.
