@@ -316,20 +316,8 @@ Examples:
   confusing, as ``block_key`` is also used to refer to ``UsageKeys``, which identifies a block usage
   *across an entire instance*.
 
-Rationale
-*********
-
-The five categories above cover the vast majority of identifiers that appear in Open edX Python
-code. Keeping the naming conventions to a small, well-defined set makes them easy to learn and apply
-consistently. The ``_pk`` / ``_key`` / ``_code`` / ``_uuid`` suffixes were chosen because they are
-short, distinct from one another, and directly evocative of the kind of identifier they represent.
-
-The ``_key_string`` and ``_uuid_string`` conventions were chosen over alternatives like ``_key_str``
-or ``_uuid_str`` for readability. The word "string" more clearly signals to a reader that the value
-is a plain string rather than a Python object.
-
-Consequences & Backward Compatibility
-*************************************
+Consequences
+************
 
 Start: New conventions
 ======================
