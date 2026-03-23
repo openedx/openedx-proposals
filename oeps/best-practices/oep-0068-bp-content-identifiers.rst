@@ -11,7 +11,7 @@ OEP-68: Learning Content Identifiers
    * - Title
      - Learning Content Identifiers
    * - Last Modified
-     - 2026-03-18
+     - 2026-03-28
    * - Authors
      - Kyle McCormick <kyle@axim.org>
    * - Arbiter
@@ -21,13 +21,11 @@ OEP-68: Learning Content Identifiers
    * - Type
      - Best Practice
    * - Created
-     - 2026-03-18
+     - 2026-03-28
    * - Review Period
-     - TBD
+     - 2026-03-28 - 2026-04-13
    * - Resolution
      - TBD
-   * - References
-     -
 
 .. contents::
    :local:
@@ -64,7 +62,7 @@ job matters. Here are some ways things can go wrong when the wrong kind is used:
   *without* mentioning X or Y by name. Otherwise the copied component in Y may erroneously
   try to reference media files from course run X.
 
-* **Mixing version-aware and version-agnostic identifiers causes cache misses.** If
+* **Mixing version-aware and version-agnostic identifiers breaks lookups.** If
   learner-facing code queries a cache using a version-agnostic key, but cache entries were
   stored under version-specific keys, the cache will never be hit.
 
@@ -356,4 +354,8 @@ Migration plan
 Change History
 **************
 
-2026-03-18: Initial draft.
+2026-03-23
+==========
+
+* Initial proposal
+* `Pull request #773 <https://github.com/openedx/openedx-proposals/pull/773>`_

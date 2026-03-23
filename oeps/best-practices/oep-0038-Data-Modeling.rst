@@ -8,7 +8,7 @@ OEP-38: Data Modeling Best Practices
 +---------------+------------------------------------------------------------+
 | Title         | Data Modeling Best Practices                               |
 +---------------+------------------------------------------------------------+
-| Last Modified | 2019-09-19                                                 |
+| Last Modified | 2026-03-23
 +---------------+------------------------------------------------------------+
 | Author        | Brian Beggs <bbeggs@edx.org>                               |
 +---------------+------------------------------------------------------------+
@@ -316,8 +316,9 @@ Columns should store only exactly what the name describes
 
 - The name of a column in a table should accurately describe the data in that table.
 
-- If a column is named course_id it should only store the course_id. Not the course_key, not a numeric value, not a timestamp. Just the course_id. Conversely if a column is named course_run_key it should store the course run key, not the course_id.
-
+- If a column is named course_id it should only store the course's primary key.
+  Not a string course run key, not a UUID. For more details on naming content identifiers,
+  see :ref:`OEP-68 Learning Content Identifiers`_.
 
 Deleting data
 -------------
@@ -412,3 +413,18 @@ Backward Compatibility
 **********************
 
 Data models that are not within the standards of this document do not need to be updated to adhere to OEP-38 standards.
+
+Change History
+**************
+
+2026-03-23
+==========
+
+* Add link to :ref:`OEP-68 Learning Content Identifiers`.
+* `Pull request #773 <https://github.com/openedx/openedx-proposals/pull/773>`_
+
+2019-05-01
+==========
+
+* Initial proposal
+* `Pull request #119 <https://github.com/openedx/openedx-proposals/pull/119>`_
