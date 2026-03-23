@@ -1,4 +1,4 @@
-.. _OEP-68 Learing Content Identifiers:
+.. _OEP-68 Learning Content Identifiers:
 
 OEP-68: Learning Content Identifiers
 ####################################
@@ -37,8 +37,8 @@ Abstract
 ********
 
 When making references to learning content it's important to choose the right kind of
-identifier and name it in a way that is obvious to others. We describe five
-categories of identifiers: Intger Primary Keys, Codes, Opaque Keys, and UUIDs. We describe
+identifier and name it in a way that is obvious to others. We describe four
+categories of identifiers: Integer Primary Keys, Codes, OpaqueKeys, and UUIDs. We describe
 when to use them and how to name them. Following these guidelines will help keep
 the platform content coherent, correct, portable, and efficient.
 
@@ -64,7 +64,7 @@ the right identifier for the right job. For example:
   when it's reused in another learning context. For example, when copying a component and its
   media files from course run X to course run Y, the transfer format must describe the
   component-media relationships *without* reference to the course run keys for X or Y,
-  otherwise the copied component in Y may erronously try to reference media files from 
+  otherwise the copied component in Y may erroneously try to reference media files from
   course run X.
 
 * Mingling version-aware and version-agnostic identifiers can lead to unexpected lookup failures.
@@ -85,7 +85,7 @@ tracking events, legacy untyped Python modules, and logs). So, this OEP aims to:
 
 * Help developers make informed decisions about which types of identifiers to use.
 * Help developers name their variables and fields so that, whether or not type annotations
-  are available, the type of identifiers is obvious to the audience (revewiers, future
+  are available, the type of identifiers is obvious to the audience (reviewers, future
   developers, site admins, data researchers, advanced platform users, etc.).
 
 Specification
@@ -94,7 +94,7 @@ Specification
 Here are five recognized categories of learning content identifier in Open edX code.
 When using an identifier, first determine which category it belongs to, then consider
 if it's appropriate for the job at hand. Finally, apply the appropriate naming convention,
-as long as doing is backwards compatible and consistent with surrounding code (some judgement required here).
+as long as doing so is backwards compatible and consistent with surrounding code (some judgement required here).
 
 These conventions apply wherever Open edX learning content is referenced: Python variables, JS
 variables, Django model field names, REST API arguments, event schema fields, admin interfaces,
@@ -139,10 +139,10 @@ incremented integer assigned by the database and meaningful only within that dat
 
 **When to use**: Primary keys are the default choice for referencing database rows within an IDA
 within an instance. Always use primary keys for foreign key relationships on Django models. As
-integers, these keys an be indexed in the database with little overhead, so they're unmatched
-in efficiency when it comes to quickly lookup up data, joining data across tables, or
-enforcing data constriants.
-However, primary keys become meangliness across IDAs or instances--in these situations, one
+integers, these keys can be indexed in the database with little overhead, so they're unmatched
+in efficiency when it comes to quickly looking up data, joining data across tables, or
+enforcing data constraints.
+However, primary keys become meaningless across IDAs or instances--in these situations, one
 should use Codes, OpaqueKeys, or UUIDs (more on that below).
 
 **How to name**: By default, define every Django model with an integer primary key named ``id``.
@@ -202,7 +202,7 @@ OpaqueKeys
 An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is an immutable Python object
 consisting of a "key type" and one or more codes which, all together, uniquely identify
 some resource on an Open edX instance. OpaqueKey is an abstract base class; it is organized
-into hiearchy of subclasses, with abstract intermediate classes for concepts (like
+into a hierarchy of subclasses, with abstract intermediate classes for concepts (like
 ``LearningContextKey`` and ``UsageKey``) and concrete subclasses for specific key
 types (like ``CourseLocator``, ``LibraryUsageLocatorV2``).
 Each concrete key type serializes to a predictable string representation.
@@ -210,19 +210,19 @@ Each concrete key type serializes to a predictable string representation.
 For example:
 
 * ``"course-v1:Axim+Chem101+Spring2026"`` includes:
-  
+
   * ``course-v1`` (the key type is "course run")
   * ``Axim`` (the org code)
   * ``Chem101`` (the course code)
   * ``Spring2026`` (the run code)
 
-* ``"lb:Axim:problem:Atoms6"``
+* ``"lb:Axim:ChemLib:problem:Atoms6"``
 
   * ``lb`` (the key type is "library block")
   * ``Axim`` (the org code)
   * ``ChemLib`` (the library code)
   * ``problem`` (the type code)
-  * ``Atom6`` (the component/block code)
+  * ``Atoms6`` (the component/block code)
 
 **When to use**: Integer primary keys and OpaqueKeys both uniquely identify a resource across an
 Open edX instance. When choosing between the two, consider the following:
@@ -235,7 +235,7 @@ Open edX instance. When choosing between the two, consider the following:
   the number of internal OpaqueKey references, we make the platform more flexible to support these sort
   of operations (e.g. changing a course's run code) in the future.
 
-**How to name**: 
+**How to name**:
 
 * Python variables and attributes holding a parsed ``OpaqueKey`` object should use the suffix ``_key``.
 * Fields which marshal between OpaqueKey objects and their serialized strings, such as Django Model
@@ -256,7 +256,7 @@ Open edX instance. When choosing between the two, consider the following:
 
    def get_course(course_key: CourseKey) -> CourseOverview: ...
 
-Please note that it's preferrable to pass around the parsed ``OpaqueKey`` object
+Please note that it's preferable to pass around the parsed ``OpaqueKey`` object
 whenever it's available--compared to the serialized key string, it's more
 type-safe and centralizes all the parsing logic. Developers are also encouraged to use
 ``OpaqueKey`` subclasses as type annotations wherever appropriate.
@@ -307,14 +307,14 @@ Examples:
   ``refname``—which collides with none of the conventions above—the code signals clearly that this
   identifier is its own distinct thing.
 
-* The integer ``version_num`` is used as part of the identity several version-aware content models.
+* The integer ``version_num`` is used as part of the identity of several version-aware content models.
   It is like a Code, because it identifies a thing (a version) within a local context (a versioned entity).
   However, it's not a string, so we don't use the suffix ``_code``.
 
 * A ``BlockRef`` is a 2-tuple consisting of ``(type_code, block_code)``, locally  identifying a block usage
   within a learning context. Historically, this is often referred to as ``BlockKey``, but this has been very
   confusing, as ``block_key`` is also used to refer to ``UsageKeys``, which identifies a block usage
-  *across an entire instance*. 
+  *across an entire instance*.
 
 Rationale
 *********
@@ -348,7 +348,7 @@ Stop: Old patterns to drop
 * ``_key`` for non-OpaqueKey ref strings (e.g. ``PublishableEntity.key``)
 * ``BlockKey`` and ``block_key``
 * In OpaqueKeys, ``*Locator`` classes will be renamed to ``*Key``
- 
+
 Continue: Already widely adopted
 ================================
 
