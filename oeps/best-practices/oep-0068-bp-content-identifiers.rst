@@ -36,69 +36,64 @@ OEP-68: Learning Content Identifiers
 Abstract
 ********
 
-When making references to learning content it's important to choose the right kind of
-identifier and name it in a way that is obvious to others. We describe four
-categories of identifiers: Integer Primary Keys, Codes, OpaqueKeys, and UUIDs. We describe
-when to use them and how to name them. Following these guidelines will help keep
-the platform content coherent, correct, portable, and efficient.
+Open edX code has four kinds of identifiers for learning content: **Integer Primary Keys**,
+**Codes**, **OpaqueKeys**, and **UUIDs**. Choosing the wrong kind—or naming it ambiguously—can
+cause subtle bugs, broken exports, and painful code reviews. This OEP explains what each kind
+is, when to reach for it, and how to name it consistently.
 
-The primary audience of this OEP is **developers working on openedx-core, openedx-platform
-and other repositories which manage learning content**. However, plugin
-developers, site administrators, and nontechnical Open edX Core Contributors
-who interface with learning content may all benefit from understanding these
-concepts.
+The primary audience is **developers working on openedx-core, openedx-platform, and other
+repositories that manage learning content**. Plugin developers, site administrators, and
+nontechnical Open edX Core Contributors who work with learning content will also find these
+concepts useful.
 
 Motivation
 **********
 
-Identifiers are ubiquitous: they appear as Python variables, function parameters, Django model
-fields, database columns, REST API fields, and event data schemas. It's important to choose
-the right identifier for the right job. For example:
+Identifiers show up everywhere: Python variables, function parameters, Django model fields,
+database columns, REST API fields, event data schemas. Using the right identifier for the right
+job matters. Here are some ways things can go wrong when the wrong kind is used:
 
-* Including Open edX instance-specific information in an identifier can cause content to
-  break when it's transferred to other instances. For example, exporting course content with
-  references to the integer primary keys of learner teams (rather than the teams' slugs)
-  makes those content-team relationships invalid when transferred to any other instance.
+* **Instance-specific identifiers break exports.** Integer primary keys are assigned by a
+  specific database and are meaningless anywhere else. For example, if exported course content
+  references the primary key of a learner team (rather than the team's slug), those
+  content-team relationships become invalid the moment the content is imported into a
+  different instance.
 
-* Including learning-context-specific information in an identifier can cause content to break
-  when it's reused in another learning context. For example, when copying a component and its
-  media files from course run X to course run Y, the transfer format must describe the
-  component-media relationships *without* reference to the course run keys for X or Y,
-  otherwise the copied component in Y may erroneously try to reference media files from
-  course run X.
+* **Context-specific identifiers break reuse.** When copying a component and its media files
+  from course run X to course run Y, the transfer format must describe those relationships
+  *without* mentioning X or Y by name. Otherwise the copied component in Y may erroneously
+  try to reference media files from course run X.
 
-* Mingling version-aware and version-agnostic identifiers can lead to unexpected lookup failures.
-  For example, if learner-facing code queries a course run cache for the latest content without
-  specifying a version number, but the cache entries are saved using identifiers that include
-  the version number, then the cache will never be hit.
+* **Mixing version-aware and version-agnostic identifiers causes cache misses.** If
+  learner-facing code queries a cache using a version-agnostic key, but cache entries were
+  stored under version-specific keys, the cache will never be hit.
 
-* Using long strings for foreign keys instead of integers can make indexes unnecessarily large
-  and inefficient. For example, the table which joins components and media files uses
-  their integer primary keys rather than paths or slugs. Only when exporting are the
-  integer keys resolved into a portable string format.
+* **String foreign keys make databases slow.** Long strings make indexes unnecessarily large.
+  The table joining components to media files uses integer primary keys internally—only at
+  export time are those keys resolved into portable strings.
 
-It's easier to review code for appropriate usage of identifiers when it's obvious which kind
-of identifier is expected to be in any given variable, model field, etc. Type annotations
-go a long way towards helping this, but there are many situations which types are unchecked
-and/or everything has been serialized into dicts and strings (such as REST APIs, frontend code,
-tracking events, legacy untyped Python modules, and logs). So, this OEP aims to:
+Consistent naming also makes code review easier. Type annotations help, but a lot of
+Open edX code operates in contexts where types aren't checked: REST APIs, frontend JavaScript,
+tracking events, legacy Python modules, and log output. When a variable is named ``course_key``
+you immediately know it holds an OpaqueKey; when it's named ``course_pk`` you know it's a
+database integer. This OEP aims to:
 
-* Help developers make informed decisions about which types of identifiers to use.
-* Help developers name their variables and fields so that, whether or not type annotations
-  are available, the type of identifiers is obvious to the audience (reviewers, future
-  developers, site admins, data researchers, advanced platform users, etc.).
+* Help developers make informed decisions about which kind of identifier to use.
+* Give every identifier a name that makes its kind obvious—to reviewers, future developers,
+  site admins, data researchers, and power users—even when no type annotations are present.
 
 Specification
 *************
 
-Here are five recognized categories of learning content identifier in Open edX code.
-When using an identifier, first determine which category it belongs to, then consider
-if it's appropriate for the job at hand. Finally, apply the appropriate naming convention,
-as long as doing so is backwards compatible and consistent with surrounding code (some judgement required here).
+Open edX code uses four categories of learning content identifier. When working with an
+identifier, figure out which category it belongs to, decide whether it's the right fit for
+the job, and then apply the naming convention below. Use your judgement when adopting
+conventions in existing code—backwards compatibility and consistency with surrounding code
+come first.
 
-These conventions apply wherever Open edX learning content is referenced: Python variables, JS
-variables, Django model field names, REST API arguments, event schema fields, admin interfaces,
-application logs, and so on.
+These conventions apply everywhere learning content is referenced: Python variables, JS
+variables, Django model field names, REST API arguments, event schema fields, admin
+interfaces, application logs, and so on.
 
 Summary
 =======
@@ -134,24 +129,21 @@ Summary
 Integer Primary Keys
 ====================
 
-Every Open edX Django model should use ``django.db.models.BigAutoField`` as its primary key. This is an auto-
-incremented integer assigned by the database and meaningful only within that database.
+Every Open edX Django model should use ``django.db.models.BigAutoField`` as its primary key.
+This is an auto-incremented integer assigned by the database, meaningful only within that
+database.
 
-**When to use**: Primary keys are the default choice for referencing database rows within an IDA
-within an instance. Always use primary keys for foreign key relationships on Django models. As
-integers, these keys can be indexed in the database with little overhead, so they're unmatched
-in efficiency when it comes to quickly looking up data, joining data across tables, or
-enforcing data constraints.
-However, primary keys become meaningless across IDAs or instances--in these situations, one
-should use Codes, OpaqueKeys, or UUIDs (more on that below).
+**When to use:** Primary keys are the default way to reference a database row within a single
+IDA on a single instance. Always use them for Django model foreign key relationships—as
+integers, they can be indexed with almost no overhead, making lookups, joins, and constraint
+enforcement as fast as possible.
+The trade-off is that primary keys are meaningless outside the database that assigned them.
 
-**How to name**: By default, define every Django model with an integer primary key named ``id``.
-When defining references to other models (e.g. ``collection``) Django will automatically define the
-underlying integer foreign key using the suffix ``_id`` (e.g. ``collection_id``). However, "id" is a
-highly overloaded term and can mean many different things outside the context of a Django model.
-So, in all other circumstances (variable names, REST APIs, event schemas, etc.) it's preferred to use
-the suffix ``_pk`` (e.g. ``collection_pk``). This makes it completely unambiguous that the value
-is expected to be the integer primary key of Django model.
+**How to name:** On Django models, the primary key is ``id`` and foreign keys automatically
+get the ``_id`` suffix (e.g. ``collection_id``). Outside of model definitions—in variable
+names, REST APIs, event schemas, and so on—use the suffix ``_pk`` instead (e.g.
+``collection_pk``). "id" is an overloaded term that means many things; ``_pk`` leaves no
+doubt that the value is a Django model integer primary key.
 
 .. code-block:: python
 
@@ -170,82 +162,86 @@ This is acceptable, but ``<object>_pk`` is preferred for new code.
 Codes
 =====
 
-A code is a short, slug-like, locally-scoped string identifier. Codes generally contain alphanumeric
-characters, hyphens, underscores, and periods. They are generally (but not always) case sensitive.
-A code identifies something *within some enclosing context*—it is not globally unique on its own.
-Codes can be joined together to identify something within a broader scope.
+A code is a short, slug-like string that identifies something *within a specific enclosing
+context*. Codes typically contain alphanumeric characters, hyphens, underscores, and periods,
+and are generally case-sensitive. A code alone is not globally unique—its meaning depends on
+the scope it lives in. Multiple codes can be combined to identify something in a broader scope.
 
 For example:
 
-* A ``block_code`` differentiates a particular XBlock usage from other usages of
-  the same type within a learning context.
-* A ``block_code`` and ``type_code`` together differentiate a particular XBlock
-  usage from all blocks in a learning context.
-* An ``org_code``, ``course_code``, ``run_code``, ``block_code`` and ``type_code`` together
-  differentate a particular XBlock usage from all blocks on an Open edX instance.
+* A ``block_code`` distinguishes one XBlock usage from others of the same type within a
+  learning context.
+* A ``block_code`` and ``type_code`` together uniquely identify an XBlock usage among all
+  blocks in a learning context.
+* An ``org_code``, ``course_code``, ``run_code``, ``block_code``, and ``type_code`` together
+  uniquely identify an XBlock usage among all blocks on an Open edX instance.
 
-**When to use**: Codes are ideal for identifying something in that way that's both semantically descriptive
-and intentionally limited in specificity. This makes them ideal for transfer formats,
-where omission of information is just as important as inclusion of information.
-For example, OLX links blocks together using their ``block_code`` and ``type_code``, but *without*
-their ``org_code/course_code/run_code``--this way, the OLX can easily be imported into others instances, courses,
-or libraries.
+**When to use:** Codes are the right choice when you want an identifier that is descriptive
+but deliberately limited in scope. This makes them ideal for transfer formats, where
+*leaving information out* is just as important as including it. For example, OLX links blocks
+together using ``block_code`` and ``type_code``, but intentionally omits
+``org_code/course_code/run_code``—so the OLX can be imported into any instance, course, or
+library without modification.
 
-**How to name**: Variables and fields holding a code should use the suffix ``_code``.
+**How to name:** Variables and fields holding a code should use the suffix ``_code``.
 
-Historically, codes are sometimes called "slugs" or "shortnames". Existing code may use suffixes like ``_slug``,
-``_id``, or no suffix at all (``org``, ``run``, ``block_type``, etc.). The suffix ``_code`` is preferred for new code.
+Historically, codes have been called "slugs" or "shortnames", and existing code may use
+suffixes like ``_slug``, ``_id``, or no suffix at all (e.g. ``org``, ``run``,
+``block_type``). The suffix ``_code`` is preferred for new code.
 
 OpaqueKeys
 ==========
 
-An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is an immutable Python object
-consisting of a "key type" and one or more codes which, all together, uniquely identify
-some resource on an Open edX instance. OpaqueKey is an abstract base class; it is organized
-into a hierarchy of subclasses, with abstract intermediate classes for concepts (like
-``LearningContextKey`` and ``UsageKey``) and concrete subclasses for specific key
-types (like ``CourseLocator``, ``LibraryUsageLocatorV2``).
-Each concrete key type serializes to a predictable string representation.
+An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is an immutable Python object that
+bundles together a "key type" and one or more codes to uniquely identify a resource
+across an entire Open edX instance. Think of it as a structured, semi-human-readable
+string ID that's scoped to one instance.
+
+``OpaqueKey`` is an abstract base class organized into a hierarchy: abstract intermediate
+classes represent broad concepts (like ``LearningContextKey`` and ``UsageKey``), while
+concrete subclasses represent specific resource types (like ``CourseLocator`` and
+``LibraryUsageLocatorV2``). Each concrete type serializes to a predictable string format.
 
 For example:
 
-* ``"course-v1:Axim+Chem101+Spring2026"`` includes:
+* ``"course-v1:Axim+Chem101+Spring2026"`` contains:
 
-  * ``course-v1`` (the key type is "course run")
+  * ``course-v1`` (key type: "course run")
   * ``Axim`` (the org code)
   * ``Chem101`` (the course code)
   * ``Spring2026`` (the run code)
 
-* ``"lb:Axim:ChemLib:problem:Atoms6"``
+* ``"lb:Axim:ChemLib:problem:Atoms6"`` contains:
 
-  * ``lb`` (the key type is "library block")
+  * ``lb`` (key type: "library block")
   * ``Axim`` (the org code)
   * ``ChemLib`` (the library code)
   * ``problem`` (the type code)
   * ``Atoms6`` (the component/block code)
 
-**When to use**: Integer primary keys and OpaqueKeys both uniquely identify a resource across an
-Open edX instance. When choosing between the two, consider the following:
+**When to use:** Both integer primary keys and OpaqueKeys uniquely identify a resource within
+an instance, so when do you choose one over the other?
 
-* Integer primary keys are by far the most efficient and reliable method to relate tables within a database.
-* When displayed, OpaqueKeys provide more information. This can be good in cases where quasi-readability
-  matters, such as URLs, error logs, event data, and UIs for admins and power-users.
-* Because they are human-readable, site admins may want to change the code identifying a piece of content,
-  which would break any OpaqueKey reference to that content. This generally doesn't happen, but by limiting
-  the number of internal OpaqueKey references, we make the platform more flexible to support these sort
-  of operations (e.g. changing a course's run code) in the future.
+* **Use primary keys for database relationships.** They're far more efficient for joins,
+  lookups, and constraint enforcement.
+* **Use OpaqueKeys where quasi-readability matters.** OpaqueKey strings carry semantic
+  information, making them a better fit for URLs, error logs, event data, and admin or
+  power-user UIs.
+* **Prefer fewer internal OpaqueKey references for flexibility.** Because OpaqueKeys embed
+  human-readable codes, a site admin might want to rename a course and change its run code.
+  This is rare, but keeping internal OpaqueKey references to a minimum makes the platform
+  more adaptable to these operations in the future.
 
-**How to name**:
+**How to name:**
 
-* Python variables and attributes holding a parsed ``OpaqueKey`` object should use the suffix ``_key``.
-* Fields which marshal between OpaqueKey objects and their serialized strings, such as Django Model
-  Fields or Serializer Fields, should also use the suffix ``_key``.
-* REST APIs, event data fields, or other external serializations of OpaqueKeys should all also use
-  the suffix ``_key``.
-* When parsed ``OpaqueKey`` objects and serialized key strings co-exist in the same context,
-  such as a parsing function, use the suffix ``_key_string`` to disambiguate serialized strings.
-* Frontend variables should use the suffix ``*Key``. The suffix ``*KeyString`` is not necessary,
-  because parsed OpaqueKeys do not exist on the frontend.
+* Python variables and attributes holding a parsed ``OpaqueKey`` object → ``_key`` suffix.
+* Django Model Fields and Serializer Fields that convert between OpaqueKey objects and
+  strings → ``_key`` suffix.
+* REST APIs, event data fields, and other external representations → ``_key`` suffix.
+* When parsed objects and raw strings co-exist in the same context (e.g. a parsing
+  function) → use ``_key_string`` for the raw string to disambiguate.
+* Frontend variables → ``*Key`` suffix. ``*KeyString`` is not needed because parsed
+  OpaqueKey objects don't exist on the frontend.
 
 .. code-block:: python
 
@@ -256,64 +252,62 @@ Open edX instance. When choosing between the two, consider the following:
 
    def get_course(course_key: CourseKey) -> CourseOverview: ...
 
-Please note that it's preferable to pass around the parsed ``OpaqueKey`` object
-whenever it's available--compared to the serialized key string, it's more
-type-safe and centralizes all the parsing logic. Developers are also encouraged to use
-``OpaqueKey`` subclasses as type annotations wherever appropriate.
+Prefer passing parsed ``OpaqueKey`` objects over raw strings whenever possible—they're
+type-safe and keep all parsing logic in one place. Use the specific ``OpaqueKey`` subclass
+as a type annotation wherever it's known.
 
-Hint: For historical reasons, concrete OpaqueKey subclasses use the suffix ``Locator``
-instead of ``Key``. For all intents and purposes, this distinction can be ignored by consumers. They
-are all ``_keys``. In the future, we will unify all OpaqueKey classes to be named ``*Key``.
+💡 **Historical note:** Concrete OpaqueKey subclasses use the suffix ``Locator`` instead of
+``Key`` for historical reasons. This distinction can be ignored by consumers—they're all
+``_keys``. We plan to rename all ``*Locator`` classes to ``*Key`` in the future.
 
 .. _openedx/opaque-keys: https://github.com/openedx/opaque-keys
 
 UUIDs
 =====
 
-A UUID (Universally Unique Identifier) is a 128-bit identifier that uniquely identifies a resource
-across *all* Open edX instances. Unlike primary keys and OpaqueKeys, UUIDs are not scoped to a
-single database or instance.
+A UUID (Universally Unique Identifier) is a 128-bit identifier that is unique across *all*
+Open edX instances, not just one. Unlike primary keys and OpaqueKeys, UUIDs have no
+dependency on any particular database or deployment.
 
-**When to use**: Use UUIDs when you want to give an object an identity that is unique across all
-Open edX instances.
+**When to use:** Use UUIDs when an object needs an identity that is stable and globally
+unique across every Open edX instance—for example, when content must be tracked or
+synchronized across instances without any shared database.
 
-**How to name**:
+**How to name:**
 
-* Python variables and attributes holding a parsed ``uuid.UUID`` object should use the suffix ``_uuid``.
-* Fields which marshal between UUID objects and their serialized strings, such as Django Model
-  Fields or Serializer Fields, should also use the suffix ``_uuid``.
-* REST APIs, event data fields, or other external serializations of UUIDs should all also use
-  the suffix ``_uuid``.
-* When parsed UUID objects and serialized UUID strings co-exist in the same context,
-  such as a parsing function, use the suffix ``_uuid_string`` to disambiguate serialized strings.
-* Frontend variables should use the suffix ``*Uuid``. The suffix ``*UuidString`` is not necessary,
-  because parsed UUID objects are not used in Open edX frontend code.
+* Python variables and attributes holding a parsed ``uuid.UUID`` object → ``_uuid`` suffix.
+* Django Model Fields and Serializer Fields that convert between UUID objects and strings →
+  ``_uuid`` suffix.
+* REST APIs, event data fields, and other external representations → ``_uuid`` suffix.
+* When parsed objects and raw strings co-exist in the same context → use ``_uuid_string``
+  for the raw string to disambiguate.
+* Frontend variables → ``*Uuid`` suffix. ``*UuidString`` is not needed because parsed UUID
+  objects are not used in Open edX frontend code.
 
 Other Identifiers
 =================
 
-Not every identifier fits neatly into one of the above categories. When an identifier does not,
-choose a name that does not use any of the suffixes ``_pk``, ``_key``, ``_key_string``, ``_code``,
-``_uuid``, or ``_uuid_string``, so that readers are not misled into assuming a type or scope that
-does not apply.
+Not every identifier fits neatly into one of the four categories above. When that happens,
+choose a name that avoids the reserved suffixes ``_pk``, ``_key``, ``_key_string``,
+``_code``, ``_uuid``, and ``_uuid_string``. Using a different name signals clearly to
+readers that this identifier has its own semantics and shouldn't be treated as one of the
+standard types.
 
 Examples:
 
-* The ``refname`` field on ``PublishableEntity`` objects in ``openedx-core``. A ``refname``
-  correlates a database entity
-  with its representation in off-platform content archives. It is not a primary key (which would be
-  database-specific), not a code (because it may contain non-slug characters), and not an OpaqueKey
-  (because it cannot be parsed into a globally-scoped identifier). By choosing the name
-  ``refname``—which collides with none of the conventions above—the code signals clearly that this
-  identifier is its own distinct thing.
+* ``refname`` on ``PublishableEntity`` in ``openedx-core`` — this field correlates a
+  database entity with its representation in off-platform content archives. It isn't a
+  primary key (those are database-specific), a code (it may contain non-slug characters),
+  or an OpaqueKey (it can't be parsed into an instance-scoped identifier). The name
+  ``refname`` signals that it's something distinct.
 
-* The integer ``version_num`` is used as part of the identity of several version-aware content models.
-  It is like a Code, because it identifies a thing (a version) within a local context (a versioned entity).
-  However, it's not a string, so we don't use the suffix ``_code``.
+* ``version_num`` — an integer used as part of the identity of several version-aware content
+  models. It resembles a Code conceptually (it identifies a version within a versioned
+  entity), but it's an integer rather than a string, so ``_code`` would be misleading.
 
-* A ``BlockRef`` is a 2-tuple consisting of ``(type_code, block_code)``, locally  identifying a block usage
-  within a learning context. Historically, this is often referred to as ``BlockKey``, but this has been very
-  confusing, as ``block_key`` is also used to refer to ``UsageKeys``, which identifies a block usage
+* ``BlockRef`` — a 2-tuple of ``(type_code, block_code)`` that locally identifies a block
+  usage within a learning context. Historically this was called ``BlockKey``, which proved
+  confusing because ``block_key`` is also used for ``UsageKeys``, which identify a block
   *across an entire instance*.
 
 Consequences
@@ -348,11 +342,11 @@ Migration plan
 ==============
 
 * The guidance above applies immediately to new code.
-* Start retroactively applying guidance ``openedx-core``, which has few references to update.
+* Start retroactively applying guidance in ``openedx-core``, which has few references to update.
 * Move on to ``opaque-keys``, probably after Verawood.
 * Eventually, time permitting, consider updating existing variables and renaming model fields in ``openedx-platform``.
-* Whenever renaming classes, keep old names as aliases to new ones
-* Whenever renaming fields, use ``@property`` to make readonly backcompat aliases
+* Whenever renaming classes, keep old names as aliases to new ones.
+* Whenever renaming fields, use ``@property`` to make readonly backcompat aliases.
 
 Change History
 **************
