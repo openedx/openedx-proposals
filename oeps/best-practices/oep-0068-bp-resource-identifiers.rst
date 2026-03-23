@@ -298,6 +298,7 @@ choose a name that does not use any of the suffixes ``_pk``, ``_key``, ``_key_st
 does not apply.
 
 Examples:
+
 * The ``refname`` field on ``PublishableEntity`` objects in ``openedx-core``. A ``refname``
   correlates a database entity
   with its representation in off-platform content archives. It is not a primary key (which would be
@@ -305,9 +306,15 @@ Examples:
   (because it cannot be parsed into a globally-scoped identifier). By choosing the name
   ``refname``—which collides with none of the conventions above—the code signals clearly that this
   identifier is its own distinct thing.
+
 * The integer ``version_num`` is used as part of the identity several version-aware content models.
   It is like a Code, because it identifies a thing (a version) within a local context (a versioned entity).
   However, it's not a string, so we don't use the suffix ``_code``.
+
+* A ``BlockRef`` is a 2-tuple consisting of ``(type_code, block_code)``, locally  identifying a block usage
+  within a learning context. Historically, this is often referred to as ``BlockKey``, but this has been very
+  confusing, as ``block_key`` is also used to refer to ``UsageKeys``, which identifies a block usage
+  *across an entire instance*. 
 
 Rationale
 *********
@@ -321,28 +328,41 @@ The ``_key_string`` and ``_uuid_string`` conventions were chosen over alternativ
 or ``_uuid_str`` for readability. The word "string" more clearly signals to a reader that the value
 is a plain string rather than a Python object.
 
-Backward Compatibility
-**********************
+Consequces & Backward Compatibility
+************************************
 
-TBC
+tart: New conventions
+#######################
 
-Reference Implementation
-************************
+* ``_pk`` for integer primary key variables.
+* ``_key_string`` and ``_uuid_string`` for stringified OpaqueKeys and UUIDs.
+* ``_code`` for codes (and, the term "code" in general)
+* ``BlockRef`` and ``block_ref`` for 2-tuples of ``(type_code, block_code)``
 
-TBC
+Stop: Old patterns to drop
+##########################
 
-Rejected Alternatives
-*********************
+* ``_id`` for OpaqueKeys (e.g. ``course_id``)
+* ``_id`` for codes (e.g., ``block_id``)
+* ``BlockKey`` and ``block_key``
+* In OpaqueKeys, ``*Locator`` classes will be renamed to ``*Key``
+ 
+Continue: Already widely adopted
+################################
 
-**Using** ``_id`` **for primary keys**: The ``_id`` suffix is ambiguous—it could refer to any kind
-of identifier. The ``_pk`` suffix is more specific and aligns with Django's own ``pk`` attribute
-name.
+* ``id`` field on models for integer primary keys.
+* ``_key`` for OpaqueKey objects.
+* ``_uuid`` for UUID objects.
 
-**Using** ``_key`` **for all string identifiers**: Overloading ``_key`` to mean "any string that
-identifies something" would eliminate the useful distinction between globally-scoped OpaqueKeys,
-locally-scoped codes, and serialized vs. parsed representations.
+Migration plan
+##############
 
-TODO Finish
+* The guidance above applies immediately to new code.
+* Start retroactively applying guidance ``openedx-core``, which has few references to update.
+* Move on to ``opaque-keys``, probably after Verawood.
+* Eventually, time permitting, consider updating existing variables and renaming model fields in ``openedx-platform``.
+* Whenever renaming classes, keep old names as aliases to new ones
+* Whenever renaming fields, use ``@property`` to make readonly backcompat aliases
 
 Change History
 **************
