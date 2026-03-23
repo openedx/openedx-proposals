@@ -260,6 +260,11 @@ as a type annotation wherever it's known.
 ``Key`` for historical reasons. This distinction can be ignored by consumers—they're all
 ``_keys``. We plan to rename all ``*Locator`` classes to ``*Key`` in the future.
 
+⚠️ **Historical hazard:** Older types like ``CourseLocator`` can represent both
+version-aware and version-agnostic identifiers. This has led to all sorts of bugs and is
+widely considered a mistake. New OpaqueKey classes should refer to exactly one kind of
+resource—version information must be either always present or always absent, never optional.
+
 .. _openedx/opaque-keys: https://github.com/openedx/opaque-keys
 
 UUIDs
