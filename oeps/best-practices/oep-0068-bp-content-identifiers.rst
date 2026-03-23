@@ -344,6 +344,8 @@ Stop: Old patterns to drop
 
 * ``_id`` for OpaqueKeys (e.g. ``course_id``)
 * ``_id`` for codes (e.g., ``block_id``)
+* ``_key`` for codes (e.g., ``collection_key``)
+* ``_key`` for non-OpaqueKey ref strings (e.g. ``PublishableEntity.key``)
 * ``BlockKey`` and ``block_key``
 * In OpaqueKeys, ``*Locator`` classes will be renamed to ``*Key``
  
