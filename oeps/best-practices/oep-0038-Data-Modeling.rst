@@ -318,7 +318,7 @@ Columns should store only exactly what the name describes
 
 - If a column is named ``course_id`` it should only store the course's primary key.
   Not a string course run key, not a UUID. For more details on naming content identifiers,
-  see :ref:`OEP-68 Learning Content Identifiers`_.
+  see :ref:`OEP-68 Learning Content Identifiers`.
 
 Deleting data
 -------------
