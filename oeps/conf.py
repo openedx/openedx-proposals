@@ -63,6 +63,7 @@ master_doc = 'index'
 project = u'Open edX Proposals'
 current_year = datetime.utcnow().year
 copyright = f"{current_year}, Axim Collaborative"
+author = "Open edX Community"
 
 html_context = {
     "display_github": True, # Integrate GitHub
