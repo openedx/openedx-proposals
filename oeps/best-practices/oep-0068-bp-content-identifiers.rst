@@ -104,35 +104,38 @@ Summary
      - What it is
      - Python type
      - Naming convention
+     - Storage
    * - Integer Primary Key
      - Auto-incremented integer row identifier
      - ``int``
      - * ``id``, ``*_id`` on the model.
        * ``pk``, ``*_pk`` everywhere else.
+     - ``BigAutoField``
    * - Code
      - Locally-scoped slug-like string
      - ``str``
      - * ``*_code``
+     - ``code_field``
    * - OpaqueKey
      - Codes composed together into a semi-readable instance-wide identifier
      - subclass of ``OpaqueKey``
      - * ``*_key`` for parsed OpaqueKey objects
-       * ``*_key`` or ``*_key_string`` for serialized OpaqueKey strings
+       * ``*_key`` or ``*_key_str`` for serialized OpaqueKey strings
+     - ``OpaqueKeyField``
    * - UUID
      - Globally unique identifier scoped across all Open edX instances
      - ``uuid.UUID``
      - * ``*_uuid`` for parsed UUID objects
-       * ``*_uuid`` or ``*_uuid_string`` for serialized UUID strings
+       * ``*_uuid`` or ``*_uuid_str`` for serialized UUID strings
+     - ``UUIDField``
 
 Integer Primary Keys
 ====================
 
-Every Open edX Django model should use ``django.db.models.BigAutoField`` as its primary key.
-This is an auto-incremented integer assigned by the database, meaningful only within that
-database.
+Every Open edX Django model should declare an auto-incrementing integer primary key.
 
 **When to use:** Primary keys are the default way to reference a database row within a single
-IDA on a single instance. Always use them for Django model foreign key relationships—as
+deployed service on a single instance. Always use them for Django model foreign key relationships—as
 integers, they can be indexed with almost no overhead, making lookups, joins, and constraint
 enforcement as fast as possible.
 The trade-off is that primary keys are meaningless outside the database that assigned them.
@@ -140,8 +143,13 @@ The trade-off is that primary keys are meaningless outside the database that ass
 **How to name:** On Django models, the primary key is ``id`` and foreign keys automatically
 get the ``_id`` suffix (e.g. ``collection_id``). Outside of model definitions—in variable
 names, REST APIs, event schemas, and so on—use the suffix ``_pk`` instead (e.g.
-``collection_pk``). "id" is an overloaded term that means many things; ``_pk`` leaves no
+``collection_pk``). When accessing the primary key on a django model, prefer ``.pk``, e.g.
+``collection.pk``.  "id" is an overloaded term that means many things; ``_pk`` leaves no
 doubt that the value is a Django model integer primary key.
+
+**How to store:** By default, use ``django.db.models.BigAutoField`` for all primary keys.
+In rare cases—when a model has very few rows (like an enumeration) or receives a massive
+number of foreign key references—use the smaller ``django.db.models.AutoField`` instead.
 
 .. code-block:: python
 
@@ -186,6 +194,10 @@ library without modification.
 Historically, codes have been called "slugs" or "shortnames", and existing code may use
 suffixes like ``_slug``, ``_id``, or no suffix at all (e.g. ``org``, ``run``,
 ``block_type``). The suffix ``_code`` is preferred for new code.
+
+**How to store:** By default, store codes in a case-sensitive ``CharField`` of length 255
+with a regex validator. A factory function is available at ``openedx_django_lib.fields.code_field``.
+
 
 OpaqueKeys
 ==========
@@ -237,7 +249,7 @@ an instance, so when do you choose one over the other?
   strings → ``_key`` suffix.
 * REST APIs, event data fields, and other external representations → ``_key`` suffix.
 * When parsed objects and raw strings co-exist in the same context (e.g. a parsing
-  function) → use ``_key_string`` for the raw string to disambiguate.
+  function) → use ``_key_str`` for the raw string to disambiguate.
 * Frontend variables → ``*Key`` suffix. ``*KeyString`` is not needed because parsed
   OpaqueKey objects don't exist on the frontend.
 
@@ -253,6 +265,10 @@ an instance, so when do you choose one over the other?
 Prefer passing parsed ``OpaqueKey`` objects over raw strings whenever possible—they're
 type-safe and keep all parsing logic in one place. Use the specific ``OpaqueKey`` subclass
 as a type annotation wherever it's known.
+
+**How to store:** The best way to store an OpaqueKey is an ``OpaqueKeyField`` subclass such
+as ``UsageKeyField``, providing automatic marshalling between OpaqueKey objects and their
+string representations in SQL VARCHARs.
 
 💡 **Historical note:** Concrete OpaqueKey subclasses use the suffix ``Locator`` instead of
 ``Key`` for historical reasons. This distinction can be ignored by consumers—they're all
@@ -273,26 +289,33 @@ Open edX instances, not just one. Unlike primary keys and OpaqueKeys, UUIDs have
 dependency on any particular database or deployment.
 
 **When to use:** Use UUIDs when an object needs an identity that is stable and globally
-unique across every Open edX instance—for example, when content must be tracked or
-synchronized across instances without any shared database.
+unique across every Open edX instance, allowing the objects to be shared outside and
+across instances without risk of collision. For example:
+* Learner certificates awarded on different Open edX instances should have distinct
+  UUIDs, even if their instance-local identifiers (course run key, user primary
+  key) are identical.
+* Changelog entries should have distinct UUIDs, even the changes are identical.
 
 **How to name:**
-
 * Python variables and attributes holding a parsed ``uuid.UUID`` object → ``_uuid`` suffix.
 * Django Model Fields and Serializer Fields that convert between UUID objects and strings →
   ``_uuid`` suffix.
 * REST APIs, event data fields, and other external representations → ``_uuid`` suffix.
-* When parsed objects and raw strings co-exist in the same context → use ``_uuid_string``
+* When parsed objects and raw strings co-exist in the same context → use ``_uuid_str``
   for the raw string to disambiguate.
 * Frontend variables → ``*Uuid`` suffix. ``*UuidString`` is not needed because parsed UUID
   objects are not used in Open edX frontend code.
+
+**How to store:** The best way to store a UUID is a ``UUIDField``.
+
+Not every object needs a universal identity. Consider the need before defining a ``UUDIField``.
 
 Other Identifiers
 =================
 
 Not every identifier fits neatly into one of the four categories above. When that happens,
-choose a name that avoids the reserved suffixes ``_pk``, ``_key``, ``_key_string``,
-``_code``, ``_uuid``, and ``_uuid_string``. Using a different name signals clearly to
+choose a name that avoids the reserved suffixes ``_pk``, ``_key``, ``_key_str``,
+``_code``, ``_uuid``, and ``_uuid_str``. Using a different name signals clearly to
 readers that this identifier has its own semantics and shouldn't be treated as one of the
 standard types.
 
@@ -320,7 +343,6 @@ Start: New conventions
 ======================
 
 * ``_pk`` for integer primary key variables.
-* ``_key_string`` and ``_uuid_string`` for stringified OpaqueKeys and UUIDs.
 * ``_code`` for codes (and, the term "code" in general)
 * ``BlockRef`` and ``block_ref`` for 2-tuples of ``(type_code, block_code)``
 
@@ -340,6 +362,7 @@ Continue: Already widely adopted
 * ``id`` field on models for integer primary keys.
 * ``_key`` for OpaqueKey objects.
 * ``_uuid`` for UUID objects.
+* ``_key_str`` and ``_uuid_str`` for stringified OpaqueKeys and UUIDs.
 
 Migration plan
 ==============
