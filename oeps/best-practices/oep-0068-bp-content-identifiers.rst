@@ -98,7 +98,7 @@ Summary
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 30 25 25
+   :widths: 18 28 15 22 17
 
    * - Category
      - What it is
@@ -291,12 +291,14 @@ dependency on any particular database or deployment.
 **When to use:** Use UUIDs when an object needs an identity that is stable and globally
 unique across every Open edX instance, allowing the objects to be shared outside and
 across instances without risk of collision. For example:
+
 * Learner certificates awarded on different Open edX instances should have distinct
   UUIDs, even if their instance-local identifiers (course run key, user primary
   key) are identical.
-* Changelog entries should have distinct UUIDs, even the changes are identical.
+* Changelog entries should have distinct UUIDs, even if the changes are identical.
 
 **How to name:**
+
 * Python variables and attributes holding a parsed ``uuid.UUID`` object → ``_uuid`` suffix.
 * Django Model Fields and Serializer Fields that convert between UUID objects and strings →
   ``_uuid`` suffix.
