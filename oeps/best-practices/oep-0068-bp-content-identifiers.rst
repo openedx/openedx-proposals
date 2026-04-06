@@ -202,26 +202,26 @@ with a regex validator. A factory function is available at ``openedx_django_lib.
 OpaqueKeys
 ==========
 
-An OpaqueKey (defined in `openedx/opaque-keys`_) is an immutable Python object
-that bundles together a "key type" and one or more codes to uniquely identify a
-resource across an entire Open edX instance. Think of it as a structured,
-semi-human-readable string ID.  ``OpaqueKey`` itself is an abstract base class
-organized into a hierarchy: abstract intermediate classes represent broad
-concepts (like ``LearningContextKey`` and ``UsageKey``), while concrete
-subclasses represent specific resource types (like ``CourseLocator`` and
-``LibraryUsageLocatorV2``).  Each concrete type serializes to a predictable
-string format.
+An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is an immutable Python object that
+bundles a "key type" and one or more codes to uniquely identify a resource within an Open edX
+instance. Think of it as a structured, semi-human-readable instance-scoped identifier.
 
-OpaqueKeys are designed to identify a resource on a single instance, but
-identical OpaqueKeys can naturally occur across instances. For example, if you
-export a course from one instance and import it into another with the same
-org/course/run codes, all blocks' OpaqueKeys will match. External tools like
-catalog integrations, sync workflows, and reporting scripts may rely on
-OpaqueKeys to associate data across instances. But, there are limitations:
-content can diverge over time, learner data is always
-instance-specific, and Open edX itself doesn't enforce any meaning to OpaqueKeys
-across instance boundaries. If you need truly global, unambiguous identity
-across all instances, use UUIDs instead.
+``OpaqueKey`` is an abstract base class organized into a hierarchy: abstract intermediate
+classes represent broad concepts (like ``LearningContextKey`` and ``UsageKey``), while concrete
+subclasses represent specific resource types (like ``CourseLocator`` and ``LibraryUsageLocatorV2``).
+Each concrete type serializes to a predictable string format.
+
+**A note on cross-instance usage:** OpaqueKeys are designed for use within a single instance,
+but the same OpaqueKey can naturally appear in multiple instances. For example, if you export a
+course with org code ``Axim``, course code ``Chem101``, and run code ``Spring2026`` from one
+instance and import it elsewhere using the same codes, all the blocks will have identical
+OpaqueKeys. This is useful: external tools like catalog integrations, sync workflows, and
+reporting scripts can use OpaqueKeys to correlate data across instances.
+
+However, OpaqueKeys have limits. Content can diverge after import, learner data stays
+instance-specific, and Open edX doesn't enforce any global meaning to OpaqueKeys across
+boundaries. If you need an identifier that is truly unique across all instances, use UUIDs
+instead.
 
 For example:
 
