@@ -202,15 +202,26 @@ with a regex validator. A factory function is available at ``openedx_django_lib.
 OpaqueKeys
 ==========
 
-An ``OpaqueKey`` (defined in `openedx/opaque-keys`_) is an immutable Python object that
-bundles together a "key type" and one or more codes to uniquely identify a resource
-across an entire Open edX instance. Think of it as a structured, semi-human-readable
-string ID that's scoped to one instance.
+An OpaqueKey (defined in `openedx/opaque-keys`_) is an immutable Python object
+that bundles together a "key type" and one or more codes to uniquely identify a
+resource across an entire Open edX instance. Think of it as a structured,
+semi-human-readable string ID.  ``OpaqueKey`` itself is an abstract base class
+organized into a hierarchy: abstract intermediate classes represent broad
+concepts (like ``LearningContextKey`` and ``UsageKey``), while concrete
+subclasses represent specific resource types (like ``CourseLocator`` and
+``LibraryUsageLocatorV2``).  Each concrete type serializes to a predictable
+string format.
 
-``OpaqueKey`` is an abstract base class organized into a hierarchy: abstract intermediate
-classes represent broad concepts (like ``LearningContextKey`` and ``UsageKey``), while
-concrete subclasses represent specific resource types (like ``CourseLocator`` and
-``LibraryUsageLocatorV2``). Each concrete type serializes to a predictable string format.
+OpaqueKeys are designed to identify a resource on a single instance, but
+identical OpaqueKeys can naturally occur across instances. For example, if you
+export a course from one instance and import it into another with the same
+org/course/run codes, all blocks' OpaqueKeys will match. External tools like
+catalog integrations, sync workflows, and reporting scripts may rely on
+OpaqueKeys to associate data across instances. But, there are limitations:
+content can diverge over time, learner data is always
+instance-specific, and Open edX itself doesn't enforce any meaning to OpaqueKeys
+across instance boundaries. If you need truly global, unambiguous identity
+across all instances, use UUIDs instead.
 
 For example:
 
