@@ -143,10 +143,6 @@ The trade-off is that primary keys are meaningless outside the database that ass
 Django model fields, variable names, REST APIs, event schemas, and so on. When accessing the
 primary key on a Django model instance, use ``.id`` (e.g. ``collection.id``).
 
-**How to store:** By default, use ``django.db.models.BigAutoField`` for all primary keys.
-In rare cases—when a model has very few rows (like an enumeration) or receives a massive
-number of foreign key references—use the smaller ``django.db.models.AutoField`` instead.
-
 .. code-block:: python
 
    @dataclass
@@ -157,6 +153,10 @@ number of foreign key references—use the smaller ``django.db.models.AutoField`
        team_name: str
 
    def get_memberships(user_id: int) -> Iterable[TeamMembershipInfo]: ...
+
+**How to store:** By default, use ``django.db.models.BigAutoField`` for all primary keys.
+In rare cases—when a model has very few rows (like an enumeration) or receives a massive
+number of foreign key references—use the smaller ``django.db.models.AutoField`` instead.
 
 Codes
 =====
@@ -398,7 +398,7 @@ That recommendation was dropped in favor of ``id`` and ``_id`` for two reasons:
   ``.id`` outweighs the explicitness of ``.pk``.
 
 * **Less code churn.** Most existing Open edX code already uses ``.id`` and ``_id`` for
-  primary keys, so adopting ``_id`` as the standard means less code churn when
+  primary keys, so adopting ``_id`` as the standard means fewer code changes when
   implementing this OEP's guidelines.
 
 Change History
