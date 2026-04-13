@@ -11,7 +11,7 @@ OEP-68: Learning Content Identifiers
    * - Title
      - Learning Content Identifiers
    * - Last Modified
-     - 2026-03-28
+     - 2026-04-10
    * - Authors
      - Kyle McCormick <kyle@axim.org>
    * - Arbiter
@@ -72,8 +72,8 @@ job matters. Here are some ways things can go wrong when the wrong kind is used:
 
 Consistent naming also makes code review easier. Type annotations help, but a lot of
 Open edX code operates in contexts where types aren't checked: REST APIs, frontend JavaScript,
-tracking events, legacy Python modules, and log output. When a variable is named ``course_key``
-you immediately know it holds an OpaqueKey; when it's named ``course_pk`` you know it's a
+tracking events, legacy Python modules, and log output. When a variable is named ``collection_key``
+you immediately know it holds an OpaqueKey; when it's named ``collection_id`` you know it's a
 database integer. This OEP aims to:
 
 * Help developers make informed decisions about which kind of identifier to use.
@@ -108,8 +108,7 @@ Summary
    * - Integer Primary Key
      - Auto-incremented integer row identifier
      - ``int``
-     - * ``id``, ``*_id`` on the model.
-       * ``pk``, ``*_pk`` everywhere else.
+     - * ``id``, ``*_id``
      - ``BigAutoField``
    * - Code
      - Locally-scoped slug-like string
@@ -140,12 +139,9 @@ integers, they can be indexed with almost no overhead, making lookups, joins, an
 enforcement as fast as possible.
 The trade-off is that primary keys are meaningless outside the database that assigned them.
 
-**How to name:** On Django models, the primary key is ``id`` and foreign keys automatically
-get the ``_id`` suffix (e.g. ``collection_id``). Outside of model definitions—in variable
-names, REST APIs, event schemas, and so on—use the suffix ``_pk`` instead (e.g.
-``collection_pk``). When accessing the primary key on a django model, prefer ``.pk``, e.g.
-``collection.pk``.  "id" is an overloaded term that means many things; ``_pk`` leaves no
-doubt that the value is a Django model integer primary key.
+**How to name:** Use ``id`` and the ``_id`` suffix (e.g. ``collection_id``) everywhere:
+Django model fields, variable names, REST APIs, event schemas, and so on. When accessing the
+primary key on a Django model instance, use ``.id`` (e.g. ``collection.id``).
 
 **How to store:** By default, use ``django.db.models.BigAutoField`` for all primary keys.
 In rare cases—when a model has very few rows (like an enumeration) or receives a massive
@@ -155,15 +151,12 @@ number of foreign key references—use the smaller ``django.db.models.AutoField`
 
    @dataclass
    class TeamMembershipInfo:
-       user_pk: int
+       user_id: int
        user_fullname: str
-       team_pk: int
+       team_id: int
        team_name: str
 
-   def get_memberships(user_pk: int) -> Iterable[TeamMembershipInfo]: ...
-
-Existing Open edX code frequently uses ``<object>_id`` for variables holding primary keys.
-This is acceptable, but ``<object>_pk`` is preferred for new code.
+   def get_memberships(user_id: int) -> Iterable[TeamMembershipInfo]: ...
 
 Codes
 =====
@@ -327,7 +320,7 @@ Other Identifiers
 =================
 
 Not every identifier fits neatly into one of the four categories above. When that happens,
-choose a name that avoids the reserved suffixes ``_pk``, ``_key``, ``_key_str``,
+choose a name that avoids the reserved suffixes ``_id``, ``_key``, ``_key_str``,
 ``_code``, ``_uuid``, and ``_uuid_str``. Using a different name signals clearly to
 readers that this identifier has its own semantics and shouldn't be treated as one of the
 standard types.
@@ -355,7 +348,6 @@ Consequences
 Start: New conventions
 ======================
 
-* ``_pk`` for integer primary key variables.
 * ``_code`` for codes (and, the term "code" in general)
 * ``BlockRef`` and ``block_ref`` for 2-tuples of ``(type_code, block_code)``
 
@@ -372,7 +364,7 @@ Stop: Old patterns to drop
 Continue: Already widely adopted
 ================================
 
-* ``id`` field on models for integer primary keys.
+* ``id`` and ``_id`` for integer primary keys.
 * ``_key`` for OpaqueKey objects.
 * ``_uuid`` for UUID objects.
 * ``_key_str`` and ``_uuid_str`` for stringified OpaqueKeys and UUIDs.
@@ -387,8 +379,36 @@ Migration plan
 * Whenever renaming classes, keep old names as aliases to new ones.
 * Whenever renaming fields, use ``@property`` to make readonly backcompat aliases.
 
+Rejected Alternatives
+*********************
+
+``pk`` and ``_pk`` for integer primary keys
+============================================
+
+An earlier draft of this OEP recommended ``_pk`` for integer primary key variables and
+``.pk`` for accessing the primary key on a Django model instance. The argument was that
+``_pk`` leaves no doubt that the value is a database integer, whereas ``_id`` is overloaded.
+
+That recommendation was dropped in favor of ``id`` and ``_id`` for two reasons:
+
+* **Static typing of primary keys.** A planned improvement to this OEP adds static typing
+  to primary keys—for example, ``Component.ID`` and ``CourseRun.ID`` as sub-types of
+  ``int``. These types can be specified on the ``.id`` model field, but a django-stubs
+  limitation means ``.pk`` can only have type ``Any``. The ability to statically type
+  ``.id`` outweighs the explicitness of ``.pk``.
+
+* **Less code churn.** Most existing Open edX code already uses ``.id`` and ``_id`` for
+  primary keys, so adopting ``_id`` as the standard means less code churn when
+  implementing this OEP's guidelines.
+
 Change History
 **************
+
+2026-04-10
+==========
+
+* Replace ``_pk`` naming recommendation with ``_id`` for integer primary keys
+* Add Rejected Alternatives section
 
 2026-03-23
 ==========
