@@ -17,7 +17,7 @@ OEP-68: Learning Content Identifiers
    * - Arbiter
      - Sarina Canelake <sarina@axim.org>
    * - Status
-     - Draft
+     - Accepted
    * - Type
      - Best Practice
    * - Created
