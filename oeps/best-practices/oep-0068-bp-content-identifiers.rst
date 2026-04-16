@@ -25,7 +25,9 @@ OEP-68: Learning Content Identifiers
    * - Review Period
      - 2026-03-28 - 2026-04-15
    * - Resolution
-     - TBD
+     - `Original pull request`_
+
+.. _Original pull request: https://github.com/openedx/openedx-proposals/pull/773
 
 .. contents::
    :local:
