@@ -23,7 +23,7 @@ OEP-68: Learning Content Identifiers
    * - Created
      - 2026-03-28
    * - Review Period
-     - 2026-03-28 - 2026-04-13
+     - 2026-03-28 - 2026-04-15
    * - Resolution
      - TBD
 
