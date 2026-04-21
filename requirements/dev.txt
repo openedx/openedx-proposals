@@ -61,7 +61,7 @@ markupsafe==3.0.3
     # via
     #   -r requirements/base.txt
     #   jinja2
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/base.txt
     #   sphinx
