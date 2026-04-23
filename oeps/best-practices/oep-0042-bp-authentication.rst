@@ -11,13 +11,13 @@ OEP-42: Authentication
    * - Title
      - Authentication
    * - Last Modified
-     - 2020-05-26
+     - 2024-07-15
    * - Authors
      - Robert Raposa, Nimisha Asthagiri, Julia Eskew
    * - Arbiter
      - Jinder Singh
    * - Status
-     - Accepted
+     - Deferred
    * - Type
      - Best Practice
    * - Created
@@ -28,6 +28,13 @@ OEP-42: Authentication
 .. contents::
    :local:
    :depth: 2
+
+.. note::
+
+    This OEP has been marked as "Deferred", meaning no further progress has been
+    made on the OEP - that is, XBlock authentication is not under development as
+    of July 2024. See `the GitHub discussion ticket
+    <https://github.com/openedx/open-edx-proposals/issues/489>`_ for more detail.
 
 Summary
 *******
@@ -289,6 +296,12 @@ References
 
 Change History
 **************
+
+2024-07-15
+==========
+
+* Mark OEP as Deferred, as per `issue 489 <https://github.com/openedx/open-edx-proposals/issues/489>`_
+* `Pull request #612 <https://github.com/openedx/open-edx-proposals/pull/612>`_
 
 2022-11-23
 ==========
