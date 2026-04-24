@@ -11,7 +11,7 @@ OEP-67: Standard Tools and Technologies
    * - Title
      - Tools and Technology Standards
    * - Last Modified
-     - 2025-02-10
+     - 2026-04-24
    * - Authors
      - Feanil Patel <feanil@axim.org>
    * - Arbiter
@@ -27,7 +27,8 @@ OEP-67: Standard Tools and Technologies
    * - Resolution
      - * https://github.com/openedx/openedx-proposals/pull/518
    * - References
-     - :ref:`OEP-11 Front End Technology Standards`
+     - * Replaces :ref:`OEP-11 Front End Technology Standards`
+       * Replaces :ref:`OEP-18 Python Dependency Management`
 
 Abstract
 ********
@@ -327,6 +328,32 @@ they do not require disruptive migrations that would break existing MySQL
 installations. Support for these other database backends is not guaranteed and
 may require plugins or lag behind the official releases.
 
+#. **pyproject.toml should be used to declare project metadata and dependencies**
+
+   **Rationale**: `PEP 621`_ standardized project metadata in ``pyproject.toml``,
+   and `PEP 735`_ added dependency groups — a standard way to declare
+   context-specific dependencies (test, docs, CI, dev, etc.). Using
+   ``pyproject.toml`` as the single source of truth replaces the older pattern
+   of ``requirements/*.in`` files and ``setup.py`` / ``setup.cfg``, simplifies
+   tooling, and aligns with the broader Python ecosystem.
+
+#. **uv should be used for Python dependency locking and virtual environment management**
+
+   **Rationale**: `uv`_ consolidates dependency resolution, locking, virtual
+   environment creation, and tool execution into a single fast tool. It replaces
+   `pip-tools`_ (``pip-compile`` / ``pip-sync``) and produces a single
+   ``uv.lock`` file from ``pyproject.toml`` dependency groups. The existing
+   ``make upgrade`` pattern is preserved — the target now runs
+   ``uv lock --upgrade`` instead of ``pip-compile --upgrade``.
+
+   **Decision Record**: For details, see
+   :ref:`Use uv for Python dependency management`.
+
+.. _PEP 621: https://peps.python.org/pep-0621/
+.. _PEP 735: https://peps.python.org/pep-0735/
+.. _uv: https://docs.astral.sh/uv/
+.. _pip-tools: https://github.com/jazzband/pip-tools
+
 
 Decisions
 *********
@@ -357,7 +384,7 @@ considered.
    :maxdepth: 1
    :glob:
 
-..   oep-0067/decisions/backend/*
+   oep-0067/decisions/backend/*
 
 
 
@@ -368,10 +395,21 @@ Consequences
 
 * All ADRs under OEP-11 will be moved to be under this OEP instead.
 
+* :ref:`OEP-18 Python Dependency Management` will be superseded by the backend
+  technology recommendations in this OEP.
+
 * Future decisions for technology changes will require an ADR and an update to this OEP
 
 Change History
 **************
+
+2026-04-24
+==========
+
+* Add ``pyproject.toml`` and ``uv`` to Backend Technology Selection
+* Add backend ADR for adopting uv (replacing pip-tools)
+* Mark :ref:`OEP-18 Python Dependency Management` as superseded
+* `Pull request #784 <https://github.com/openedx/openedx-proposals/pull/784>`_
 
 2025-02-10
 ==========
