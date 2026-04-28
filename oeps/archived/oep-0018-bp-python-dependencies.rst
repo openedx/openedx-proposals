@@ -8,13 +8,13 @@ OEP-18: Python Dependency Management
 +-----------------+--------------------------------------------------------+
 | Title           | Python Dependencies Management                         |
 +-----------------+--------------------------------------------------------+
-| Last Modified   | 2023-03-06                                             |
+| Last Modified   | 2026-04-24                                             |
 +-----------------+--------------------------------------------------------+
 | Authors         | Jeremy Bowman <jbowman@edx.org>                        |
 +-----------------+--------------------------------------------------------+
 | Arbiter         | Calen Pennington <cale@edx.org>                        |
 +-----------------+--------------------------------------------------------+
-| Status          | Approved                                               |
+| Status          | Replaced                                               |
 +-----------------+--------------------------------------------------------+
 | Type            | Best Practice                                          |
 +-----------------+--------------------------------------------------------+
@@ -26,6 +26,11 @@ OEP-18: Python Dependency Management
 +-----------------+--------------------------------------------------------+
 
 .. _open-edx-proposals#56 resolution: https://github.com/openedx/openedx-proposals/pull/56#pullrequestreview-116976355
+
+.. warning::
+
+   This OEP has been replaced and may be out of date.  For the most up-to-date
+   information see :ref:`OEP-67 Standard Tools and Technologies`.
 
 .. contents::
    :local:
