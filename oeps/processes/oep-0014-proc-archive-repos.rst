@@ -189,7 +189,7 @@ Change History
 ===========
 
 * Add step to close open PRs & Issues when archiving a repo.
-* `Pull request #785 <https://github.com/openedx/openedx-proposals/pull/785>`_
+* `Pull request #786 <https://github.com/openedx/openedx-proposals/pull/786>`_
 
 2025-06-12
 ===========
