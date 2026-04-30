@@ -77,9 +77,11 @@ Archive Steps
 
 These steps should be followed for all repos within the Open edX organization (forks included). After some experiments with keeping archived repos in the `openedx github organization`_, we've learned that having abandoned code show up in searches hinders work to understand the current state of the system and the risk around new work, particularly deprecations and API changes. Thus we decided to move all archived repositories to a separate org.
 
-1. Update the README.rst file in the repository to add a brief note about why the repo is being archived, and what is serving as its replacement (where applicable). This may be as simple as a linking to the appropriate DEPR ticket.
+#. Update the README.rst file in the repository to add a brief note about why the repo is being archived, and what is serving as its replacement (where applicable). This may be as simple as a linking to the appropriate DEPR ticket.
 
-2. Unless you have the relevant permissions to perform this step, create a new `GitHub Request on the Axim board`_  and ask them to do the following:
+#. Close all open PRs and Issues.
+
+#. Unless you have the relevant permissions to perform this step, create a new `GitHub Request on the Axim board`_  and ask them to do the following:
 
   - Transfer the associated DEPR issue from the to-be-archived repo to `public-engineering`_ (if applicable).
 
@@ -182,6 +184,12 @@ Reasons rejected:
 
 Change History
 **************
+
+2026-04-30
+===========
+
+* Add step to close open PRs & Issues when archiving a repo.
+* `Pull request #785 <https://github.com/openedx/openedx-proposals/pull/785>`_
 
 2025-06-12
 ===========
