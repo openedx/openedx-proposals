@@ -82,6 +82,14 @@ This technology is not specific to frontend or backend code.
    tool should be used to perform Continuous Integration (CI) testing for all Open edX repositories
    that perform any sort of software testing.
 
+#. **Usage of AI for Code Contributions**
+
+   **Rationale**: As AI permeates the developer ecosystem, the Open edX community has decided to welcome
+   the use of AI tools as part of the contribution workflow. Contributors and reviewers should review
+   the project's `AI Contribution Policy`_ before choosing an AI tool or contributing code with it.
+
+.. _AI Contribution Policy: https://github.com/openedx/.github/blob/master/AI_POLICY.md
+
 .. _Frontend Technology Selection:
 
 Frontend Technology Selection
@@ -402,6 +410,12 @@ Consequences
 
 Change History
 **************
+
+2026-05-01
+==========
+
+* Add section on AI contributions
+* `Pull request #787 <https://github.com/openedx/openedx-proposals/pull/787>`_
 
 2026-04-24
 ==========
