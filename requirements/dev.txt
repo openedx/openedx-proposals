@@ -44,7 +44,7 @@ docutils==0.22.4
     #   sphinx
 h11==0.16.0
     # via uvicorn
-idna==3.13
+idna==3.14
     # via
     #   -r requirements/base.txt
     #   anyio
@@ -140,7 +140,7 @@ typing-extensions==4.15.0
     #   beautifulsoup4
     #   pydata-sphinx-theme
     #   starlette
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -r requirements/base.txt
     #   requests
