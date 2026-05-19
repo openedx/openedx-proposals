@@ -33,7 +33,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.3.3
+click==8.4.0
     # via uvicorn
 colorama==0.4.6
     # via sphinx-autobuild
@@ -44,7 +44,7 @@ docutils==0.22.4
     #   sphinx
 h11==0.16.0
     # via uvicorn
-idna==3.14
+idna==3.15
     # via
     #   -r requirements/base.txt
     #   anyio
@@ -75,7 +75,7 @@ pygments==2.20.0
     #   accessible-pygments
     #   pydata-sphinx-theme
     #   sphinx
-requests==2.34.0
+requests==2.34.2
     # via
     #   -r requirements/base.txt
     #   sphinx
@@ -144,9 +144,9 @@ urllib3==2.7.0
     # via
     #   -r requirements/base.txt
     #   requests
-uvicorn==0.46.0
+uvicorn==0.47.0
     # via sphinx-autobuild
-watchfiles==1.1.1
+watchfiles==1.2.0
     # via sphinx-autobuild
 websockets==16.0
     # via sphinx-autobuild
