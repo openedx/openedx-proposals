@@ -25,7 +25,7 @@ beautifulsoup4==4.14.3
     # via
     #   -r requirements/base.txt
     #   pydata-sphinx-theme
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   -r requirements/base.txt
     #   requests
@@ -33,7 +33,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.4.0
+click==8.4.1
     # via uvicorn
 colorama==0.4.6
     # via sphinx-autobuild
@@ -44,7 +44,7 @@ docutils==0.22.4
     #   sphinx
 h11==0.16.0
     # via uvicorn
-idna==3.15
+idna==3.16
     # via
     #   -r requirements/base.txt
     #   anyio
@@ -83,11 +83,11 @@ roman-numerals==4.1.0
     # via
     #   -r requirements/base.txt
     #   sphinx
-snowballstemmer==3.0.1
+snowballstemmer==3.1.0
     # via
     #   -r requirements/base.txt
     #   sphinx
-soupsieve==2.8.3
+soupsieve==2.8.4
     # via
     #   -r requirements/base.txt
     #   beautifulsoup4
@@ -131,7 +131,7 @@ sphinxcontrib-serializinghtml==2.0.0
     #   sphinx
 sphinxext-rediraffe==0.3.0
     # via -r requirements/base.txt
-starlette==1.0.0
+starlette==1.1.0
     # via sphinx-autobuild
 typing-extensions==4.15.0
     # via
@@ -144,7 +144,7 @@ urllib3==2.7.0
     # via
     #   -r requirements/base.txt
     #   requests
-uvicorn==0.47.0
+uvicorn==0.48.0
     # via sphinx-autobuild
 watchfiles==1.2.0
     # via sphinx-autobuild
