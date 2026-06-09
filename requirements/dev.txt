@@ -21,7 +21,7 @@ babel==2.18.0
     #   -r requirements/base.txt
     #   pydata-sphinx-theme
     #   sphinx
-beautifulsoup4==4.14.3
+beautifulsoup4==4.15.0
     # via
     #   -r requirements/base.txt
     #   pydata-sphinx-theme
@@ -44,7 +44,7 @@ docutils==0.22.4
     #   sphinx
 h11==0.16.0
     # via uvicorn
-idna==3.17
+idna==3.18
     # via
     #   -r requirements/base.txt
     #   anyio
@@ -83,7 +83,7 @@ roman-numerals==4.1.0
     # via
     #   -r requirements/base.txt
     #   sphinx
-snowballstemmer==3.1.0
+snowballstemmer==3.1.1
     # via
     #   -r requirements/base.txt
     #   sphinx
@@ -144,7 +144,7 @@ urllib3==2.7.0
     # via
     #   -r requirements/base.txt
     #   requests
-uvicorn==0.48.0
+uvicorn==0.49.0
     # via sphinx-autobuild
 watchfiles==1.2.0
     # via sphinx-autobuild
