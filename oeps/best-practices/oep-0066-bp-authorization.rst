@@ -11,7 +11,7 @@ OEP-66: User Authorization
    * - Title
      - User Authorization
    * - Last Modified
-     - 2025-12-18
+     - 2026-06-17
    * - Authors
      - Hilary Sinkoff (hsinkoff@2u.com), Jeremy Bowman (jbowman@edx.org), Maria F Magallanes (maria.magallanes@edunext.co)
    * - Arbiter
@@ -304,6 +304,192 @@ could be used by default for all view classes which don't override it.
 
 .. _BasePermission: https://www.django-rest-framework.org/api-guide/permissions/#custom-permissions
 .. _filter_backends: https://www.django-rest-framework.org/api-guide/filtering/#setting-filter-backends
+
+Separating Authorization Concerns in List Endpoints
+---------------------------------------------------
+
+The filter backend above answers a single question: "which rows may this user
+see?" In practice, list endpoints tend to tangle that question together with two
+others inside view logic, frequently as inline ``has_access`` checks. List
+endpoints should instead keep three concerns separate, each handled by a
+dedicated layer:
+
+* **Endpoint access**: DRF ``permission_classes``. Answers: "May this user call
+  this endpoint at all?" Returns ``403`` when denied.
+* **Record visibility (row-level security)**: a policy applied in
+  ``get_queryset()``. Answers: "Which rows is this user allowed to see?" Rows the
+  user may not see are simply absent from the response; their absence is never a
+  ``403``.
+* **User-driven filtering**: a ``django-filter`` ``FilterSet``. Answers: "Of the
+  visible rows, which did the user ask for?" (for example, ``?org=edX``). This
+  narrows an already-authorized queryset and must never widen it.
+
+Keeping these separate makes access behavior consistent across endpoints,
+auditable in one place per model, and testable in isolation. The record
+visibility layer is the row-level security (RLS) concern; the rest of this
+section describes a reusable pattern for it.
+
+A pluggable policy and a mixin
+==============================
+
+Record visibility is expressed as a policy object with a single ``scope`` method
+and applied by a mixin that calls it from ``get_queryset()``. The policy is
+deliberately separate from the view so that the same visibility rule can be
+reused and unit-tested independently of any endpoint:
+
+.. code-block:: python
+
+   from abc import ABC, abstractmethod
+
+   from django.core.exceptions import ImproperlyConfigured
+
+
+   class RLSPolicy(ABC):
+       """Scopes a queryset to the rows a user is permitted to see."""
+
+       @abstractmethod
+       def scope(self, queryset, user):
+           """Return ``queryset`` filtered to the rows visible to ``user``."""
+
+
+   class RLSQuerysetMixin:
+       """Applies ``rls_policy`` to the base queryset of a DRF view."""
+
+       rls_policy = None  # an RLSPolicy instance
+
+       def get_queryset(self):
+           queryset = super().get_queryset()
+           if self.rls_policy is None:
+               raise ImproperlyConfigured("RLSQuerysetMixin requires an rls_policy")
+           return self.rls_policy.scope(queryset, self.request.user)
+
+How ``scope()`` checks permissions
+==================================
+
+A policy must not re-implement access rules. It delegates to the platform's
+authorization engine and translates the engine's answer into a queryset filter.
+The key idea is to ask the engine *which scopes* (organizations, courses, etc.) the
+subject may act in for a given permission, and then turn that scope set into a
+``WHERE`` clause. :ref:`openedx-authz <openedx-authz-section>` exposes exactly
+this lookup via ``get_scopes_for_subject_and_permission``:
+
+.. code-block:: python
+
+   from django.db.models import Q
+
+   from openedx_authz.api.data import (
+       ActionData,
+       CourseOverviewData,
+       OrgCourseOverviewGlobData,
+       PermissionData,
+       PlatformCourseOverviewGlobData,
+       UserData,
+   )
+   from openedx_authz.api.roles import get_scopes_for_subject_and_permission
+
+
+   class CourseRLSPolicy(RLSPolicy):
+       # A permission wraps the action being authorized; "view_course" is
+       # illustrative; use the action name registered for courses.
+       permission = PermissionData(action=ActionData(external_key="view_course"))
+
+       def scope(self, queryset, user):
+           subject = UserData(external_key=user.username)
+           scopes = get_scopes_for_subject_and_permission(subject, self.permission)
+
+           org_keys, course_ids = [], []
+           for scope in scopes:
+               # Platform-wide scope (``course-v1:*``): the user sees everything.
+               if isinstance(scope, PlatformCourseOverviewGlobData):
+                   return queryset
+               # Organization scope (``course-v1:ORG+*``): all courses in the org.
+               if isinstance(scope, OrgCourseOverviewGlobData):
+                   org_keys.append(scope.org)
+               # A single course scope.
+               elif isinstance(scope, CourseOverviewData):
+                   course_ids.append(scope.course_id)
+
+           return queryset.filter(Q(org__in=org_keys) | Q(id__in=course_ids))
+
+
+   class CourseListView(RLSQuerysetMixin, ListAPIView):
+       permission_classes = [IsAuthenticated]   # endpoint access
+       rls_policy = CourseRLSPolicy()            # record visibility
+       filterset_class = CourseFilterSet         # user-driven filtering
+       queryset = CourseOverview.objects.all()
+
+This resolves the question of where the scoping logic lives: the visibility rule
+is owned by the authorization engine, the policy only maps the engine's scope set
+onto the model's columns, and the view wires the three layers together.
+
+Crucially, ``scope()`` resolves the user's accessible scopes in **one bulk
+lookup** and filters in the database, rather than fetching every row and running
+an ``enforce``-style check per object. openedx-authz established this same
+scope-set approach, for performance reasons, in its
+`ADR-0014 (bulk assignment queries without Casbin enforce) <openedx-authz ADR-0014_>`_;
+list endpoints should reuse it instead of per-row checks.
+
+List vs. single-object access
+=============================
+
+The RLS filter applies to **list** responses. Retrieving a single object should
+**not** build the full visible-scope set and then select from it; it should ask
+the narrower question directly ("may this user see course X?") as an
+object-level point check:
+
+* **List** (``GET /courses/``): ``get_queryset()`` applies ``rls_policy.scope``,
+  so the user sees only rows within their accessible scopes.
+* **Detail** (``GET /courses/{id}/``): a point check against the engine for that
+  one object, via DRF's ``check_object_permissions`` (for example using
+  ``DjangoObjectPermissions`` / ``has_perm``, or openedx-authz's
+  ``is_subject_allowed(subject, action, scope)``), returning ``404``/``403`` when
+  the object is not visible.
+
+Both paths consult the same authorization engine, so they cannot disagree, but
+each uses the cheapest query for its shape: a scope-set filter for lists, a
+single point check for detail.
+
+Note one DRF subtlety: ``GenericAPIView.get_object()`` filters
+``get_queryset()`` before fetching the object, so a single view class that both
+lists and retrieves will run ``scope()`` on the detail path too. That is safe
+and often acceptable, but it builds the whole visible-scope set just to fetch
+one row. To get the cheaper point check, give the detail action its own view (or
+override ``get_object``) and authorize the single object directly rather than
+inheriting the list queryset. Apply ``RLSQuerysetMixin`` to the list view in
+either case.
+
+Relationship to openedx-authz
+=============================
+
+`openedx-authz`_ is the platform's emerging unified authorization framework (see
+:ref:`openedx-authz <openedx-authz-section>`). The RLS pattern above is the
+view-layer counterpart to it: openedx-authz owns *who may do what, and where*
+(roles, permissions, and scopes, evaluated by `Casbin`_), while the RLS policy
+owns *how that decision is applied to a Django queryset*. The pattern is
+deliberately engine-agnostic (a ``bridgekeeper``-backed policy can implement the
+same ``scope`` interface during migration), but new policies should target
+openedx-authz. The relevant decisions there are:
+
+* `openedx-authz ADR-0002`_ defines the Scoped-RBAC / ABAC model and the
+  subject-action-object-context check that the policy maps onto.
+* `openedx-authz ADR-0004`_ records the selection of Casbin as the policy engine.
+* `openedx-authz ADR-0014`_ introduces the bulk scope-lookup primitive
+  (``get_scopes_for_subject_and_permission``) that ``scope()`` should use instead
+  of per-row enforcement.
+
+.. _openedx-authz ADR-0002: https://github.com/openedx/openedx-authz/blob/main/docs/decisions/0002-authorization-model-foundation.rst
+.. _openedx-authz ADR-0004: https://github.com/openedx/openedx-authz/blob/main/docs/decisions/0004-technology-selection.rst
+.. _openedx-authz ADR-0014: https://github.com/openedx/openedx-authz/blob/main/docs/decisions/0014-bulk-assignment-queries-without-casbin-enforce.rst
+
+Data sources without an ORM
+===========================
+
+The ``get_queryset()`` filter assumes a Django ORM queryset. Some endpoints are
+backed by the modulestore (for example, Course Blocks), which cannot be filtered
+at the database layer. For those, the same three-layer separation still holds,
+but the RLS policy applies its scope decision in memory after retrieval. This is
+less efficient than ORM-level scoping and should be treated as a fallback, used
+only where an ORM-backed source is unavailable.
 
 Systems/Protocols Overview
 **************************
@@ -603,6 +789,14 @@ References
 
 Change History
 **************
+
+2026-06-17
+----------
+
+* Extend the Django REST Framework section with a row-level security pattern for
+  list endpoints: separating endpoint access, record visibility, and
+  user-driven filtering, with record visibility delegated to ``openedx-authz``.
+* `Pull request #XXX <https://github.com/openedx/openedx-proposals/pull/XXX>`_
 
 2025-12-18
 ----------
