@@ -796,7 +796,7 @@ Change History
 * Extend the Django REST Framework section with a row-level security pattern for
   list endpoints: separating endpoint access, record visibility, and
   user-driven filtering, with record visibility delegated to ``openedx-authz``.
-* `Pull request #XXX <https://github.com/openedx/openedx-proposals/pull/XXX>`_
+* `Pull request #802 <https://github.com/openedx/openedx-proposals/pull/802>`_
 
 2025-12-18
 ----------
