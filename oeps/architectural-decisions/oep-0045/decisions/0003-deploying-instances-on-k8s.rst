@@ -22,16 +22,8 @@ Open edX commercial providers are working this challenge around by purpose-made 
 Decision
 ********
 
-Although operational needs may vary, `OpenCraft`_ provides an `open-source cluster template`_ with all necessary tooling and automation for Open edX operators who want to provision their Open edX hosting infrastructure on Kubernetes and deploy instances on it.
+We recommend that all large Open edX deployments use the community-maintained Terraform modules and Helm chart described in decision 0002, existing solutions in the Open edX ecosystem (`GitHub Actions`_), provider-maintained open-source tooling (`Drydock`_ and `Picasso`_), and cloud-native, provider-agnostic deployment tools (`ArgoCD`_, and `Argo Workflows`_). We encourage providers to share any additional deployment code/tooling they use as open source repos or templates that other providers can use as a reference. If any particular template such as OpenCraft's Launchpad (link) becomes adopted by multiple providers, it should be considered for adoption as a community standard, and this OEP should be updated to recommend its use.
 
-The open-source cluster template is designed to use the community-maintained Terraform modules and Helm chart described in decision 0002, existing solutions in the Open edX ecosystem (`GitHub Actions`_), provider-maintained open-source tooling (`Drydock`_ and `Picasso`_), and cloud-native, provider-agnostic deployment tools (`ArgoCD`_, and `Argo Workflows`_).
-
-While the infrastructure components should be provisioned using community-provided components, neither the cluster template nor the rendered cluster repository should use stateful tools for instance deployments. For example, they should not create database users with Terraform.
-
-The template nor the resulting cluster should contain company-specific operational logic, so that it remains broadly adoptable and easier to collaborate on with the community.
-
-.. _OpenCraft: https://opencraft.com
-.. _open-source cluster template: https://github.com/open-craft/launchpad-cluster-template
 .. _GitHub Actions: https://github.com/features/actions
 .. _Drydock: https://github.com/eduNEXT/drydock
 .. _Picasso: https://github.com/eduNEXT/picasso
