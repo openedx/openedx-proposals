@@ -26,3 +26,4 @@
 "processes/oep-0056-proc-architectural-advisory-process.rst" "archived/oep-0056-proc-architectural-advisory-process.rst"
 "architectural-decisions/oep-0006-arch-context-xblock-fields.rst" "archived/oep-0006-arch-context-xblock-fields.rst"
 "best-practices/oep-0018-bp-python-dependencies.rst" "archived/oep-0018-bp-python-dependencies.rst"
+"architectural-decisions/oep-0045/decisions/0002-helm-for-multi-instance-k8s.rst" "architectural-decisions/oep-0045/decisions/0002-openedx-hosting-infrastructure-on-k8s.rst"
