@@ -11,7 +11,7 @@ Status
 Context
 *******
 
-:ref:`OEP-65 <OEP-65 Frontend Composibility>` was written in an attempt to identify and mitigate some of the issues stemming from the siloed development of frontend apps.  Many of these issues are caused by apps using multiple versions of the same dependencies, resulting in reduced consistency, maintainability, user experience (UX) and developer experience (DX).  While frontend-base provides a technical framework to deduplicate these dependencies, it does not make it  impossible to configure a site with some duplicate dependencies.  We must decide on a pattern that establishes how dependency upgrades happen, in such a way that maximizes consistency, maintainability, UX, and DX.
+:ref:`OEP-65 <OEP-65 Frontend Composability>` was written in an attempt to identify and mitigate some of the issues stemming from the siloed development of frontend apps.  Many of these issues are caused by apps using multiple versions of the same dependencies, resulting in reduced consistency, maintainability, user experience (UX) and developer experience (DX).  While frontend-base provides a technical framework to deduplicate these dependencies, it does not make it  impossible to configure a site with some duplicate dependencies.  We must decide on a pattern that establishes how dependency upgrades happen, in such a way that maximizes consistency, maintainability, UX, and DX.
 
 Decision
 ********

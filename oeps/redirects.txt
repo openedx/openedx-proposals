@@ -26,3 +26,6 @@
 "processes/oep-0056-proc-architectural-advisory-process.rst" "archived/oep-0056-proc-architectural-advisory-process.rst"
 "architectural-decisions/oep-0006-arch-context-xblock-fields.rst" "archived/oep-0006-arch-context-xblock-fields.rst"
 "best-practices/oep-0018-bp-python-dependencies.rst" "archived/oep-0018-bp-python-dependencies.rst"
+"architectural-decisions/oep-0065/decisions/0001-unified-platform-repository.rst" "architectural-decisions/oep-0065/decisions/0001-unified-platform-library.rst"
+"architectural-decisions/oep-0065/decisions/0002-frontend-app-migrations.rst" "architectural-decisions/oep-0065/decisions/0002-frontend-apps.rst"
+"architectural-decisions/oep-0065/decisions/0003-frontend-projects.rst" "architectural-decisions/oep-0065/decisions/0003-frontend-sites.rst"
