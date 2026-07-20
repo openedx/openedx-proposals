@@ -12,9 +12,9 @@ Context
 
 Hosting Open edX instances on Kubernetes requires a complex infrastructure setup, especially when multiple instances are involved. Decisions made during cluster setup can directly affect the performance, latency, and reliability of those instances
 
-The `decision 0002`_ elaborates on the need for community-maintained components to reduce this complexity. Although the Terraform modules and Helm chart support a modular setup already removing a significant part of the complexity, they do not fully abstract that away. Furthermore, none of these components are addressing the significant challenge of deploying instances on the Kubernetes.
+The `decision 0002`_ elaborates on the need for community-maintained components to reduce this complexity. Although the Terraform modules and Helm chart support a modular setup already removing a significant part of the complexity, they do not fully abstract that away. Furthermore, none of these components are addressing the significant challenge of deploying instances on Kubernetes.
 
-Open edX commercial providers are working this challenge around by purpose-made solutions that mostly not compatible with each other, regardless they are built partially on the community-maintained and provided solutions.
+Open edX commercial providers are addressing this challenge with purpose-made solutions that are mostly not compatible with each other, although they are built using some community-maintained and provided components.
 
 .. _decision 0002: https://docs.openedx.org/projects/openedx-proposals/en/latest/architectural-decisions/oep-0045/decisions/0002-openedx-hosting-infrastructure-on-k8s.html
 
@@ -54,7 +54,7 @@ Best Practices
 In order to keep a healthy state for the cluster template, these best practices should be followed:
 
 * All infrastructure dependency should be coming from the community-maintained and provided Terraform modules and Helm charts, laid out in decision 0002.
-* The instance-dependency provisioning (e.g., database users) should be as much provider-agnostic as possible.
+* Per-instance resource provisioning (e.g., database users) should be as much provider-agnostic as possible.
 * No company- or Open edX provider-specific logic should live in the cluster template or rendered cluster.
 * The instance deployment should be handled by cloud provider-agnostic tooling.
 * The CI/CD pipelines should do only the bare-minimum needed for instance setup.
