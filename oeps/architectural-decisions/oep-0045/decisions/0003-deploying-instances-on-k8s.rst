@@ -22,13 +22,14 @@ Open edX commercial providers are addressing this challenge with purpose-made so
 Decision
 ********
 
-We recommend that all large Open edX deployments use the community-maintained Terraform modules and Helm chart described in decision 0002, existing solutions in the Open edX ecosystem (`GitHub Actions`_), provider-maintained open-source tooling (`Drydock`_ and `Picasso`_), and cloud-native, provider-agnostic deployment tools (`ArgoCD`_, and `Argo Workflows`_). We encourage providers to share any additional deployment code/tooling they use as open source repos or templates that other providers can use as a reference. If any particular template such as OpenCraft's Launchpad (link) becomes adopted by multiple providers, it should be considered for adoption as a community standard, and this OEP should be updated to recommend its use.
+We recommend that all large Open edX deployments use the community-maintained Terraform modules and Helm chart described in decision 0002, existing solutions in the Open edX ecosystem (`GitHub Actions`_), provider-maintained open-source tooling (`Drydock`_ and `Picasso`_), and cloud-native, provider-agnostic deployment tools (`ArgoCD`_, and `Argo Workflows`_). We encourage providers to share any additional deployment code/tooling they use as open source repos or templates that other providers can use as a reference. If any particular template such as OpenCraft's `Launchpad`_ becomes adopted by multiple providers, it should be considered for adoption as a community standard, and this OEP should be updated to recommend its use.
 
 .. _GitHub Actions: https://github.com/features/actions
 .. _Drydock: https://github.com/eduNEXT/drydock
 .. _Picasso: https://github.com/eduNEXT/picasso
 .. _ArgoCD: https://argo-cd.readthedocs.io/en/stable/
 .. _Argo Workflows: https://argoproj.github.io/workflows/
+.. _Launchpad: https://github.com/open-craft/launchpad-cluster-template
 
 
 Consequences
@@ -60,7 +61,7 @@ In order to keep a healthy state for the cluster template, these best practices 
 * The CI/CD pipelines should do only the bare-minimum needed for instance setup.
 * No fragile or dangerous operations should be performed by the CI/CD pipelines except the instance deprovisioning flow.
 * The operators should handle the infrastructure modifications from their computer rather than from CI/CD pipelines.
-* All infrastructure provisioning should be done by purpose-made native and cluster template provided CLI tooling described by the cluster template repository.
+* Infrastructure provisioning should be done by the 3rd-party CLI tooling (such as `argo`, `tofu`/`terraform`, etc.) or by the scripts provided by Launchpad that is wrapping these 3rd-party tools.
 
 
 Change History
