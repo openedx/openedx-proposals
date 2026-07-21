@@ -27,12 +27,14 @@ idna==3.18
 imagesize==2.0.0
     # via sphinx
 jinja2==3.1.6
-    # via sphinx
+    # via
+    #   pydata-sphinx-theme
+    #   sphinx
 markupsafe==3.0.3
     # via jinja2
 packaging==26.2
     # via sphinx
-pydata-sphinx-theme==0.16.1
+pydata-sphinx-theme==0.20.0
     # via sphinx-book-theme
 pygments==2.20.0
     # via
@@ -40,12 +42,14 @@ pygments==2.20.0
     #   pydata-sphinx-theme
     #   sphinx
 requests==2.34.2
-    # via sphinx
+    # via
+    #   pydata-sphinx-theme
+    #   sphinx
 roman-numerals==4.1.0
     # via sphinx
 snowballstemmer==3.1.1
     # via sphinx
-soupsieve==2.8.4
+soupsieve==2.9
     # via beautifulsoup4
 sphinx==9.1.0
     # via
@@ -54,7 +58,7 @@ sphinx==9.1.0
     #   sphinx-book-theme
     #   sphinx-copybutton
     #   sphinxext-rediraffe
-sphinx-book-theme==1.2.0
+sphinx-book-theme==1.4.0
     # via -r requirements/base.in
 sphinx-copybutton==0.5.2
     # via -r requirements/base.in
@@ -73,8 +77,6 @@ sphinxcontrib-serializinghtml==2.0.0
 sphinxext-rediraffe==0.3.0
     # via -r requirements/base.in
 typing-extensions==4.16.0
-    # via
-    #   beautifulsoup4
-    #   pydata-sphinx-theme
+    # via beautifulsoup4
 urllib3==2.7.0
     # via requests
