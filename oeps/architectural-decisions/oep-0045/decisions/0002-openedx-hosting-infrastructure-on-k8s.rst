@@ -1,5 +1,5 @@
-Deploying Open edX on Kubernetes Using Helm
-###########################################
+Provisioning Open edX Infrastructure on Kubernetes
+##################################################
 
 
 Status
@@ -26,21 +26,30 @@ Despite this, many major commercial Open edX hosting providers have migrated tow
 Decision
 ********
 
-For Open edX operators who wish to deploy Open edX on Kubernetes, community-maintained `Helm Charts`_ will be used to simplify the process of deploying a kubernetes cluster capable of loading one or more Open edX instances.
+For Open edX operators who wish to deploy Open edX on Kubernetes, community-maintained `Terraform`_ modules and `Helm Charts`_ will be used to simplify the process of provisioning a Kubernetes cluster capable of loading one or more Open edX instances.
 
-Building on top of the `decision 0001`_ those single instances will in turn be managed by Tutor and the Tutor plugin ecosystem.
+Building on top of the `decision 0001`_, individual instances will be configured by Tutor and the Tutor plugin ecosystem.
 
-As the needs and deployment scale of Open edX operators can vary significantly, the Helm charts will be designed to be flexible, incorporating sensible defaults but allowing customization of almost every aspect of the deployment. This includes supporting various cloud providers and different underlying technologies for Kubernetes resources. E.g. Ingress controllers.
+As the needs and deployment scale of Open edX operators can vary significantly, the Terraform modules and Helm charts will be designed to be flexible, incorporating sensible defaults but allowing customization of almost every aspect of the deployment. This includes supporting various cloud providers and different underlying technologies for Kubernetes resources. E.g. Ingress controllers.
 
-The goal is for these Helm charts to be developed and maintained collaboratively, by the Open edX Operators that are using them. All relevant best practices from both the Open edX and Helm projects should be followed from the start, such as `OEP-55 Project Maintainers`_.
+The goal is for these Terraform modules and Helm charts to be developed and maintained collaboratively, by the Open edX Operators that are using them. All relevant best practices from Open edX, popular Terraform modules, and Helm projects should be followed from the start, such as `OEP-55 Project Maintainers`_.
 
 
 .. _OEP-55 Project Maintainers: https://docs.openedx.org/projects/openedx-proposals/en/latest/processes/oep-0055-proc-project-maintainers.html
+.. _Terraform: https://developer.hashicorp.com/terraform
 .. _Helm Charts: https://helm.sh/
 
 
 Consequences
 ************
+
+Terraform Modules
+=================
+
+Although several IaC solutions are available, Terraform is the most stable and widely recognized option. Its extensive module registry provides APIs and integrations for most cloud providers, SaaS platforms, and even local utilities. Terraform makes it predictable and convenient to set up infrastructure that Helm can then deploy to and operate on.
+
+Terraform modules are written in HCL (HashiCorp Configuration Language), which makes them easy to understand. However, Terraform also adds another layer of complexity to the already complex Open edX stack.
+
 
 Helm Considerations
 ===================
@@ -49,7 +58,7 @@ Helm is the best known package manager for Kubernetes. It's status as a graduate
 
 Helm makes it possible to package and publish charts, which can be rendered as kubernetes manifests. These charts provide robust support for versioning, deployment and rollback. At the same time Helm makes it easy for operators to customize application configurations during deployment and for developers to provide sensible defaults.
 
-Charts are built with the Go language templating engine.  This is a drawback, since it means adding a new language to the ecosystem with a new learning curve. Nevertheless, this is considered acceptable due to the large adoption of Helm in the devops community.
+Charts are built with the Go language templating engine. This is a drawback, since it means adding a new language to the ecosystem with a new learning curve. Nevertheless, this is considered acceptable due to the large adoption of Helm in the devops community.
 
 
 Best Practices
@@ -57,9 +66,13 @@ Best Practices
 
 **Cloud Providers**
 
-As much as possible, the Helm chart should aim to be agnostic toward the underlying cloud provider used (e.g. AWS, Azure, Google Cloud Platform, etc.). In cases where provider-specific code is required, the Charts should be written in such a way that they can be configured to work with multiple providers, and not e.g. only support AWS.
+As much as possible, the Terraform modules and Helm chart should aim to be agnostic toward the underlying cloud provider used (e.g. AWS, Azure, Google Cloud Platform, etc.). In cases where provider-specific code is required, the Charts should be written in such a way that they can be configured to work with multiple providers, and not e.g. only support AWS.
 
-**Helm subcharts and modularity**
+**Terraform Modularity**
+
+The community-maintained Terraform modules should aim for being standalone and provider agnostic as much as possible. In such cases when it is not possible (e.g., setting up an EKS cluster on AWS), the Terraform module boundaries should be clear enough that they can be used independently. For example, an operator may reuse the community-maintained Terraform module for setting up an EKS cluster on AWS, but that should not pull in dependencies on the RDS cluster module.
+
+**Helm Subcharts and Modularity**
 
 The project should aim to make the charts available in a way that is composable and granular. Extending a single subchart and using it in the composition should be a better and faster alternative than forking the whole project.
 
@@ -113,7 +126,13 @@ A `working proof of concept`_ that was written as part of the research for this 
 Change History
 **************
 
-2023--30
+2026-07-03
+==========
+
+* Extend the decision with Terraform which is integral part of the repository.
+* Rename the decision to reflect its purpose better.
+
+2023-01-30
 ==========
 
 * Document updated to include community feedback.

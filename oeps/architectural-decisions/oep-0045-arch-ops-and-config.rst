@@ -11,7 +11,7 @@ OEP-45: Configuring and Operating Open edX
    * - Title
      - Configuring and Operating Open edX
    * - Last Modified
-     - 2024-05-17
+     - 2026-07-03
    * - Authors
      - Bill DeRusha <bill@edx.org>
    * - Arbiter
@@ -129,7 +129,7 @@ Additionally it is not clear which settings are required to be overridden and wh
 
 The settings defined in ``required.py`` and ``defaults.py`` files are mutually exclusive, representing all IDA specific settings as well as installed library settings whose values either must be provided or whose defaults are not considered production-ready.
 
-``required.py`` variables must be overridden by operators.  The application will check that operators provided these values, and will not start unless they are set. This allows operators to fail fast rather than finding out about an unset value when users exercise those breaking codepaths. Application developers are encouraged to keep the list of required settings to a minimum.
+``required.py`` variables must be overridden by operators.  The application will check that operators provided these values, and will not start unless they are set. This allows operators to fail fast rather than finding out about an unset value when users exercise those breaking code paths. Application developers are encouraged to keep the list of required settings to a minimum.
 
 This new settings structure obviates the need for any other python files in the settings directory (such as ``devstack.py``, ``test.py``, etc). The values currently set in those files should be moved to a corresponding ``devstack.yml``, ``test.yml``, etc in the same settings directory. This gives developers and operators more consistency across environments since the same code paths are being executed with different values.
 
@@ -198,7 +198,7 @@ There are many django project which configure their applications by grabbing the
 Implementation Strategy
 ***********************
 
-Discussion of implentation of this OEP will happen in a `separate Pull Request`_ .
+Discussion of implementation of this OEP will happen in a `separate Pull Request`_ .
 
 .. _separate Pull Request: https://github.com/openedx/openedx-proposals/pull/144
 
@@ -216,6 +216,11 @@ The following related decisions modify or enhance this OEP, but have not yet bee
 
 Change History
 **************
+
+2026-07-03
+==========
+
+* Addressing typos in the documentation
 
 2024-05-16
 ==========
