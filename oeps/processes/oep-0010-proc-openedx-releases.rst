@@ -81,7 +81,10 @@ To be **included** in an Open edX release, a component must meet these
 criteria.
 
 - It must be successfully merged into its repository's release-from branch.
-  This is typically master, though it can be any branch.
+  This is typically master, though it can be any branch.  For a component that
+  a release pins by version rather than by branch (see `Release creation`_
+  below), this means the pinned version must have been published from a branch
+  that is maintained for the life of the release.
 
 - It must be installable in at least one of the supported installation methods.
 
@@ -149,6 +152,24 @@ Releases will be tagged ``release/RELEASENAME.1``,
   * Master branch: ``open-release/RELEASENAME.master``
   * Point releases: ``open-release/RELEASENAME.1``, ``open-release/RELEASENAME.2``, etc
 
+The above applies to components that a release pins by git reference: those that
+are deployed from, or built out of, a checkout of their own repository.  Other
+components are pinned by published version instead, as a dependency declared in
+a manifest belonging to a component that *is* pinned by git reference.  Python
+libraries pinned in ``edx-platform``'s requirements files, and NPM packages
+pinned in a frontend site's ``package.json``, both work this way.
+
+Components pinned by version are not branched or tagged for the release, and
+declare ``openedx.org/release: null`` in their ``catalog-info.yaml``.  The
+record of which version a release pins lives with the depending component, on
+that component's release branch.  Their own branching and versioning policy,
+including how long a given version line keeps receiving fixes, is defined by
+the decisions governing their ecosystem; see `Related Decisions`_ below.
+
+Being pinned by version does not reduce a component's obligations under `Levels
+of support`_.  A component that is supported in a release must keep publishing
+fixes for the version line that release pins, for the life of that release.
+
 Involving repos in the Open edX build process
 =============================================
 
@@ -193,6 +214,13 @@ The following related decisions modify or enhance this OEP, but have not yet bee
 
 Change History
 **************
+
+2026-08-04
+==========
+
+* Distinguish components that a release pins by git reference from those it
+  pins by published version.
+* `Pull request #815 <https://github.com/openedx/openedx-proposals/pull/815>`_
 
 2025-08-24
 ==========
