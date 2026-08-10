@@ -150,7 +150,6 @@ Rejected Alternatives
 Open Questions
 **************
 
-- Identification of the Arbiter.
 - Exact licensing terms and access mechanics for contributed files.
 - Whether the requirement applies to all design contributions or a defined
   subset or tier.
