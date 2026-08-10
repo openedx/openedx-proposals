@@ -86,7 +86,7 @@ Specification
 
 1. **Contribution requirement.** Any accepted product proposal that includes
    design work must submit its design collateral to the shared Open edX Figma
-   instance for the project to be considered complete. This SHOULD be captured
+   instance for the project to be considered complete. This should be captured
    as an expectation in future design contributions.
 
    - **Note**: the contribution model is actively maintained by the `Design
@@ -95,7 +95,7 @@ Specification
      allow for flexibility and openness in shared design collateral governance
      going forward.
 
-2. **Open access.** Contributed files MUST be openly accessible and reusable by
+2. **Open access.** Contributed files must be openly accessible and reusable by
    the community (viewable and exportable, under an open license) so that
    anyone can reference or build on them, including for open-format export and
    agentic prototyping.
