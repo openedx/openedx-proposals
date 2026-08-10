@@ -25,9 +25,10 @@ OEP-70: Shared Design Collateral Contribution Requirements
    * - Review Period
      - TBD (recommended 2 weeks)
    * - References
-     - Open edX shared Figma instance; `Open edX Shared Design Collateral
-       <https://openedx.atlassian.net/wiki/x/A4BtbwE>`_;
-       :ref:`OEP-1 <OEP-1 OEP Purpose and Guidelines>`
+     - | Open edX shared Figma instance
+       | `Open edX Shared Design Collateral
+       <https://openedx.atlassian.net/wiki/x/A4BtbwE>`_
+       |  :ref:OEP-1 OEP Purpose and Guidelines`
 
 .. contents::
    :local:
