@@ -85,7 +85,7 @@ Specification
 *************
 
 1. **Contribution requirement.** Any accepted product proposal that includes
-   design work MUST submit its design collateral to the shared Open edX Figma
+   design work must submit its design collateral to the shared Open edX Figma
    instance for the project to be considered complete. This SHOULD be captured
    as an expectation in future design contributions.
 
