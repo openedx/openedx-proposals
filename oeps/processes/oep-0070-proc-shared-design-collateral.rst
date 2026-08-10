@@ -102,7 +102,7 @@ Specification
 #. **Workflow parity with code.** Contributions happen in branches within the
    shared instance. Design maintainers review work-in-progress and provide
    feedback before it is merged into the live product-area files, mirroring the
-   code-maintainer model. Frozen release files are published to the Figma
+   code-maintainer model. Design files for each named release, frozen at the time of release cut, will be published to the Figma
    Community as part of the release (Build-Test-Release, or BTR) process.
 #. **Roles.** Each proposal and contribution stream has identified Author(s)
    and an Arbiter, plus Design Maintainers (analogous to code maintainers)
