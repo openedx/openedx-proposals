@@ -55,7 +55,7 @@ contributing them is strongly encouraged.
 Motivation
 **********
 
-Historically, Open edX has had no shared source of truth for design resources.
+Historically, the Open edX project has had no shared source of truth for design resources.
 This created three recurring problems:
 
 1. **Duplicated, siloed work.** Every provider with design capacity maintained
