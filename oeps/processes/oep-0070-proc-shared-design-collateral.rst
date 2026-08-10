@@ -136,17 +136,6 @@ Rationale
 - **Reduced duplication.** Shared, reusable atoms, molecules, and full views
   cut redundant design spend across providers.
 
-Rejected Alternatives
-*********************
-
-- **Voluntary adoption only.** Already attempted through direct and
-  working-group outreach. It produced enthusiasm but insufficient
-  follow-through, leaving maintenance concentrated in a single provider.
-- **Any single provider as ongoing design arbiter.** Rejected. The goal is a
-  shared community norm and capability, not a gatekeeper. Time-boxed resourcing
-  to help providers through first-time heavy lifts, plus reusable training, is
-  a complementary effort, not a permanent arbitration role.
-
 Open Questions
 **************
 
