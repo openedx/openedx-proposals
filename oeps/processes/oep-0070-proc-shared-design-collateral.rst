@@ -58,13 +58,13 @@ Motivation
 Historically, the Open edX project has had no shared source of truth for design resources.
 This created three recurring problems:
 
-1. **Duplicated, siloed work.** Every provider with design capacity maintained
+#. **Duplicated, siloed work.** Every provider with design capacity maintained
    separate, out-of-date versions of designs, and teams regularly recreated
    designs from scratch for existing Open edX apps.
-2. **Ambiguous intent.** Without a design source of truth, engineers could not
+#. **Ambiguous intent.** Without a design source of truth, engineers could not
    differentiate intentional design decisions from provider-specific Figma
    quirks or accidents.
-3. **High onboarding cost.** New design contributors had nowhere to start and
+#. **High onboarding cost.** New design contributors had nowhere to start and
    no history of decisions to build on, making community onboarding very
    difficult.
 
@@ -84,7 +84,7 @@ of the shared instance.
 Specification
 *************
 
-1. **Contribution requirement.** Any accepted product proposal that includes
+#. **Contribution requirement.** Any accepted product proposal that includes
    design work must submit its design collateral to the shared Open edX Figma
    instance for the project to be considered complete. This should be captured
    as an expectation in future design contributions.
@@ -95,19 +95,19 @@ Specification
      allow for flexibility and openness in shared design collateral governance
      going forward.
 
-2. **Open access.** Contributed files must be openly accessible and reusable by
+#. **Open access.** Contributed files must be openly accessible and reusable by
    the community (viewable and exportable, under an open license) so that
    anyone can reference or build on them, including for open-format export and
    agentic prototyping.
-3. **Workflow parity with code.** Contributions happen in branches within the
+#. **Workflow parity with code.** Contributions happen in branches within the
    shared instance. Design maintainers review work-in-progress and provide
    feedback before it is merged into the live product-area files, mirroring the
    code-maintainer model. Frozen release files are published to the Figma
    Community as part of the release (Build-Test-Release, or BTR) process.
-4. **Roles.** Each proposal and contribution stream has identified Author(s)
+#. **Roles.** Each proposal and contribution stream has identified Author(s)
    and an Arbiter, plus Design Maintainers (analogous to code maintainers)
    responsible for reviewing and merging contributions.
-5. **Communication and relay.** This expectation is relayed to current and
+#. **Communication and relay.** This expectation is relayed to current and
    future contribution owners and providers, and at minimum current
    contribution owners are asked to return files they worked on to the shared
    instance.
