@@ -160,18 +160,8 @@ Open Questions
 Change History
 **************
 
-2026-07-27
-==========
-
-* Converted the working draft to the OEP format and claimed the number OEP-70.
-
-2026-07-14 - 2026-07-20
-=======================
-
-* Editing some details, asking for some community input.
-
 2026-07-14
 ==========
 
-* Initial draft synthesized from recent Shared Design Collateral syncs and the
-  community provider-adoption debrief.
+* Document created.
+* `Pull request #813 <https://github.com/openedx/openedx-proposals/pull/813>`_
