@@ -31,6 +31,7 @@ OEP-69: Open edX REST API Conventions
        * `Request for community review on ADRs for standardizing the Open edX platform API endpoints <https://discuss.openedx.org/t/request-for-community-review-on-adrs-for-standardizing-the-open-edx-platform-api-endpoints/18717>`_
        * `FC-0118 epic issue #38137: "Add ADRs for technical Recommendations on Open edX REST API Standards" <https://github.com/openedx/openedx-platform/issues/38137>`_
        * `openedx-platform ADRs 0025–0037 (docs/decisions) <https://github.com/openedx/openedx-platform/commit/36a192d980faada26a423905f2a64c471928761b>`_
+       * `ADR 0038: REST API URL Structure (PR #39003) <https://github.com/openedx/openedx-platform/pull/39003>`_
        * :ref:`OEP-4 Application Authorization (Scopes)`
        * :ref:`OEP-42 Authentication`
        * :ref:`OEP-66 User Authorization`
@@ -53,9 +54,10 @@ serializers, view structure, authentication, authorization, pagination,
 filtering and sorting, response shaping, error responses, documentation,
 versioning, and endpoint topology.
 
-The individual ADRs remain in ``openedx-platform`` (``docs/decisions/0025`` through
-``0037``) as the detailed, code-adjacent record of each decision. This OEP is the
-consolidated, cross-cutting reference (the "one big, clear REST API Conventions"
+The individual ADRs live in the `openedx-platform docs/decisions folder
+<https://github.com/openedx/openedx-platform/tree/master/docs/decisions>`__ (``0025`` through ``0038``) as the detailed, code-adjacent record of
+each decision; every convention below links directly to its source ADR and to that
+ADR's code example. This OEP is the consolidated, cross-cutting reference (the "one big, clear REST API Conventions"
 document requested during community review) and is the canonical statement of the
 conventions for the Open edX community.
 
@@ -129,7 +131,7 @@ Structure and framework
 Convention 1: Use DRF serializers for all request and response handling
 -----------------------------------------------------------------------
 
-*Source: ADR 0025, Standardize Serializer Usage Across APIs.*
+*Source:* `ADR 0025: Standardize Serializer Usage Across APIs <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0025-standardize-serializer-usage.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0025-standardize-serializer-usage.rst#code-example-target-serializer-usage>`__).
 
 All Open edX REST APIs **MUST** use DRF serializers for request and response handling
 rather than hand-constructing JSON.
@@ -142,9 +144,14 @@ rather than hand-constructing JSON.
   rules.
 * Input and output serializers are often different: the request body may accept
   only a subset of fields, while the response includes computed or read-only
-  fields the caller cannot set. When they differ, define them separately and point
-  ``serializer_class`` at the **output** serializer (used by ``drf-spectacular``
-  for schema generation).
+  fields the caller cannot set. When they differ, define them as separate
+  serializers. ``serializer_class`` (or ``get_serializer_class``) supplies only a
+  single **default**, which ``drf-spectacular`` applies to *both* the request and
+  response schema, so on its own it documents at most one side correctly. Any
+  action whose request and response differ **MUST** therefore declare both
+  explicitly with ``@extend_schema(request=..., responses=...)`` (Convention 11);
+  ``serializer_class`` is just the fallback for the case where one serializer
+  serves both.
 
 .. code-block:: python
 
@@ -161,19 +168,29 @@ rather than hand-constructing JSON.
        created = serializers.DateTimeField(help_text="Enrollment creation timestamp.")
 
    class CourseEnrollmentViewSet(viewsets.ViewSet):
-       serializer_class = CourseEnrollmentOutputSerializer  # used by drf-spectacular
+       # Fallback default: used by actions (e.g. retrieve) whose response is this
+       # serializer and which take no request body; drf-spectacular reads it when
+       # @extend_schema does not override.
+       serializer_class = CourseEnrollmentOutputSerializer
 
+       def retrieve(self, request, pk=None):
+           enrollment = _get_enrollment(request.user, pk)      # uses the fallback
+           return Response(CourseEnrollmentOutputSerializer(enrollment).data)
+
+       @extend_schema(                                          # request != response
+           request=CourseEnrollmentInputSerializer,
+           responses={201: CourseEnrollmentOutputSerializer},
+       )
        def create(self, request):
            input_serializer = CourseEnrollmentInputSerializer(data=request.data)
            input_serializer.is_valid(raise_exception=True)
            enrollment = _enroll_user(request.user, **input_serializer.validated_data)
-           return Response(self.serializer_class(enrollment).data, status=201)
+           return Response(CourseEnrollmentOutputSerializer(enrollment).data, status=201)
 
 Convention 2: Consolidate related endpoints into DRF ViewSets
 -------------------------------------------------------------
 
-*Source: ADR 0028, Migrating RESTful & Legacy Django API Endpoints to Standard
-DRF ViewSets.*
+*Source:* `ADR 0028: Migrating RESTful & Legacy Django API Endpoints to Standard DRF ViewSets <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0028-migrate-restful-and-legacy-api-endpoints-using-standard-drf-viewsets.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0028-migrate-restful-and-legacy-api-endpoints-using-standard-drf-viewsets.rst#illustrative-example>`__).
 
 Related actions on a resource **MUST** be consolidated into a single DRF ViewSet rather
 than fragmented across separate class-based or function-based views per HTTP action.
@@ -191,26 +208,61 @@ than fragmented across separate class-based or function-based views per HTTP act
 * Legacy Django views **SHOULD** be migrated to ViewSets; ``APIView`` **SHOULD** be
   used for non-resource endpoints where a ViewSet is not a good fit.
 
-Convention 3: Merge closely related "sibling" endpoints
--------------------------------------------------------
+Convention 3: Consolidate RPC-style action endpoints onto their resource
+------------------------------------------------------------------------
 
-*Source: ADR 0031, Merge Similar Endpoints.*
+*Source:* `ADR 0031: Merge Similar Endpoints <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0031-merge-similar-endpoints.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0031-merge-similar-endpoints.rst#code-example-target-unified-endpoint>`__).
 
-Groups of endpoints that operate on the same resource and differ only by the
-operation applied **MUST** be consolidated into a single parameterised view (or shared
-service layer) rather than proliferating narrow, action-scoped URLs.
+This convention targets one anti-pattern: a family of separate, action-named
+top-level URLs for a single resource (an RPC style, e.g. ``/enable_x``,
+``/start_x``, ``/regenerate_x``), each re-implementing the same validation,
+permission, and audit logic. These **SHOULD** be consolidated onto the resource so
+clients have one integration point and the shared logic lives in one place.
 
-* Expose a single URL per resource group, distinguishing the operation with an
-  ``action``/``mode`` field (or HTTP verbs where REST conventions apply cleanly).
-* Shared validation, audit logging, response shaping, and permission enforcement
-  **MUST** move into a common service layer or mixin. Consolidation removes
-  duplicated boilerplate; it **MUST NOT** flatten the authorization model: the view
-  performs a coarse access check and each operation handler enforces its own
-  specific permission.
-* The unified endpoint **MUST** document its enumerated ``action``/``mode`` values
-  and their request/response shapes in OpenAPI.
-* Legacy URLs **MUST** be preserved as deprecated aliases (emitting a
-  ``Deprecation`` header) for a defined transition window.
+This is *not* about HTTP verbs: it does not mean collapsing ``GET``/``POST`` or
+list/detail into one function. Multiple verbs on a resource stay as separate methods
+in one ViewSet (Convention 2), even when list and detail logic differ substantially;
+the target is redundant *URLs*, not the verbs. A resource that only needs the
+standard CRUD verbs is already covered by Convention 2 and out of scope here.
+
+Following the ADR, consolidate onto a single URL that takes an ``action``/``mode``
+field to distinguish the operation (the certificate cluster in the linked ADR uses
+this form). Where the operations read better as distinct named routes, expose them
+as DRF ``@action`` sub-routes on the resource's ViewSet instead.
+
+* Shared validation, audit logging, and response shaping **SHOULD** move into a
+  common service layer or mixin.
+* Consolidation **MUST NOT** flatten the authorization model: keep a coarse access
+  check at the view, and enforce each operation's specific permission in its handler
+  or service.
+* The consolidated endpoint **MUST** document its ``@action`` routes or ``mode``
+  values (with request/response shapes) in OpenAPI (Convention 11), and legacy action
+  URLs **MUST** be kept as deprecated aliases (a ``Deprecation`` header) for a
+  transition window, per :ref:`OEP-21 Deprecation and Removal <OEP-21 DEPR>`.
+
+For example, a course-run resource that grew one action URL per lifecycle operation
+(each repeating the same staff-permission check and audit logging)::
+
+   POST /api/courses/v1/publish_course_run
+   POST /api/courses/v1/unpublish_course_run
+   POST /api/courses/v1/archive_course_run
+
+consolidates onto the resource, each operation a named sub-route behind one coarse
+gate:
+
+.. code-block:: python
+
+   class CourseRunViewSet(viewsets.ViewSet):
+       permission_classes = [IsCourseStaff]          # coarse gate for every action
+
+       @action(detail=True, methods=["post"])
+       def publish(self, request, pk): ...
+
+       @action(detail=True, methods=["post"])
+       def archive(self, request, pk): ...
+
+   # POST /api/courses/v1/course_runs/{id}/publish/
+   # POST /api/courses/v1/course_runs/{id}/archive/
 
 Authentication and authorization
 ================================
@@ -218,8 +270,7 @@ Authentication and authorization
 Convention 4: Standardize authentication on JWT + session
 ---------------------------------------------------------
 
-*Source: ADR 0034 / ADR 0017, Standardize Authentication Patterns and Security
-Schemes; see also* :ref:`OEP-42 Authentication`.
+*Source:* `ADR 0034: Standardize Authentication Patterns and Security Schemes <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0034-unify-auth-oauth2-dot-v2.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0034-unify-auth-oauth2-dot-v2.rst#code-examples-authentication-patterns-by-use-case>`__), with the `ADR 0017 pointer <https://github.com/openedx/openedx-platform/blob/master/openedx/core/djangoapps/oauth_dispatch/docs/decisions/0017-standardize-authentication-patterns.rst>`__. See also :ref:`OEP-42 Authentication`.
 
 ``JwtAuthentication`` **MUST** be the standard authentication mechanism for all DRF API
 endpoints that serve user-authenticated requests, with ``SessionAuthentication`` as
@@ -247,8 +298,7 @@ the accepted browser scheme (this is the platform default).
 Convention 5: Use DRF ``permission_classes`` as the authorization surface
 -------------------------------------------------------------------------
 
-*Source: ADR 0026, Standardize Permission Classes Across APIs; see also*
-:ref:`OEP-66 User Authorization`.
+*Source:* `ADR 0026: Standardize Permission Classes Across APIs <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0026-standardize-permission-classes.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0026-standardize-permission-classes.rst#code-example-target-permission-usage>`__). See also :ref:`OEP-66 User Authorization`.
 
 All Open edX REST APIs **MUST** use DRF ``permission_classes`` as the primary
 authorization surface, replacing custom decorators and inline role checks.
@@ -271,7 +321,7 @@ Request and response conventions
 Convention 6: GET requests MUST be idempotent with respect to domain state
 --------------------------------------------------------------------------
 
-*Source: ADR 0030, Ensure GET is Idempotent.*
+*Source:* `ADR 0030: Ensure GET is Idempotent <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0030-ensure-get-requests-are-idempotent.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0030-ensure-get-requests-are-idempotent.rst#code-example>`__).
 
 A ``GET`` handler **MUST** be read-only with respect to **domain state**: the
 transactional records that drive application behavior (enrollments, grades, profile
@@ -292,7 +342,7 @@ fields, access records).
 Convention 7: Standardize pagination on ``DefaultPagination``
 -------------------------------------------------------------
 
-*Source: ADR 0032, Standardize Pagination Across APIs.*
+*Source:* `ADR 0032: Standardize Pagination Across APIs <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0032-standardize-pagination-usage.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0032-standardize-pagination-usage.rst#code-example-target-pagination-usage>`__).
 
 All flat list endpoints **MUST** paginate using ``DefaultPagination`` (or a subclass)
 from ``edx-drf-extensions``: ``page``/``page_size`` parameters, default page size
@@ -314,7 +364,7 @@ from ``edx-drf-extensions``: ``page``/``page_size`` parameters, default page siz
 Convention 8: Standardize filtering and sorting on ``django-filter``
 --------------------------------------------------------------------
 
-*Source: ADR 0033, Standardize Filtering/Sorting Parameters.*
+*Source:* `ADR 0033: Standardize Filtering/Sorting Parameters <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0033-standardize-filter-sort-using-django-filter.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0033-standardize-filter-sort-using-django-filter.rst#code-examples>`__).
 
 List endpoints that support filtering **MUST** use ``django-filter``, with a single,
 documented ``ordering`` parameter for sorting.
@@ -332,7 +382,7 @@ documented ``ordering`` parameter for sorting.
 Convention 9: Reduce deeply nested JSON via minimal / flattened views
 ---------------------------------------------------------------------
 
-*Source: ADR 0036, Reduce Deeply Nested JSON via Minimal/Flattened Views.*
+*Source:* `ADR 0036: Reduce Deeply Nested JSON via Minimal/Flattened Views <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0036-normalize-deeply-nested-json-apis.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0036-normalize-deeply-nested-json-apis.rst#code-example>`__).
 
 Complex resources **MUST** offer a way to reduce payload depth and size rather than
 always returning deeply nested trees.
@@ -360,7 +410,7 @@ always returning deeply nested trees.
 Convention 10: Standardize error responses (RFC 9457-style)
 -----------------------------------------------------------
 
-*Source: ADR 0029, Standardize Error Responses.*
+*Source:* `ADR 0029: Standardize Error Responses <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0029-standardize-error-responses.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0029-standardize-error-responses.rst#code-example-target-shape>`__).
 
 All non-2xx responses **MUST** use a single, predictable, structured JSON error object
 built on a platform-level DRF exception handler.
@@ -422,28 +472,13 @@ Error-format changes are treated as backward-compatible (well-behaved clients
 tolerate extra JSON fields), so the default migration path is in-place. Teams with
 clients tightly coupled to a legacy shape **MAY** version per Convention 12.
 
-.. code-block:: json
-
-   {
-     "type": "https://docs.openedx.org/errors/validation",
-     "title": "Validation Error",
-     "status": 400,
-     "detail": "The request body failed validation.",
-     "user_message": "Some required fields are missing or invalid.",
-     "instance": "/api/courses/v1/",
-     "errors": {
-       "course_id": ["This field is required."],
-       "display_name": ["Ensure this field has no more than 255 characters."]
-     }
-   }
-
 Documentation, versioning, and endpoint topology
 ================================================
 
 Convention 11: Document every endpoint with ``drf-spectacular`` (OpenAPI 3.x)
 -----------------------------------------------------------------------------
 
-*Source: ADR 0027, Standardize API Documentation & Schema Coverage.*
+*Source:* `ADR 0027: Standardize API Documentation & Schema Coverage <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0027-standardize-api-documentation-and-schema-coverage.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0027-standardize-api-documentation-and-schema-coverage.rst#code-example-target-documentation-usage>`__).
 
 All Open edX REST APIs **MUST** use ``drf-spectacular`` with ``@extend_schema`` for
 complete, machine-readable OpenAPI 3.x documentation.
@@ -467,8 +502,7 @@ complete, machine-readable OpenAPI 3.x documentation.
 Convention 12: Version every new API and enforce compatibility in CI
 --------------------------------------------------------------------
 
-*Source: ADR 0037, API Versioning Strategy; see also* :ref:`OEP-21 Deprecation and
-Removal`.
+*Source:* `ADR 0037: API Versioning Strategy <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0037-api-versioning-strategy.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0037-api-versioning-strategy.rst#code-example-routing-pattern>`__). See also :ref:`OEP-21 Deprecation and Removal <OEP-21 DEPR>`.
 
 * Every new API endpoint **MUST** include an explicit version in its URL path
   (e.g. ``/api/foo/v1/``). Unversioned paths are not permitted for new APIs.
@@ -488,8 +522,7 @@ Removal`.
 Convention 13: One canonical front-end configuration endpoint; no per-user data on it
 -------------------------------------------------------------------------------------
 
-*Source: ADR 0035, Canonical MFE Configuration Endpoint (partially supersedes the
-MFE Config API ADR 0001); see also* :ref:`OEP-65 Frontend Composability <OEP-65 Frontend Composibility>`.
+*Source:* `ADR 0035: Canonical MFE Configuration Endpoint <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0035-canonical-mfe-configuration-endpoint.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0035-canonical-mfe-configuration-endpoint.rst#code-example-configuration-endpoint-vs-user-context-resources>`__; partially supersedes the MFE Config API ADR 0001). See also :ref:`OEP-65 Frontend Composability <OEP-65 Frontend Composibility>`.
 
 * ``/api/frontend_site_config/v1/`` (``FrontendSiteConfigView``, aligned with
   frontend-base's ``SiteConfig`` under OEP-65) is the **canonical** MFE / front-end
@@ -509,10 +542,56 @@ MFE Config API ADR 0001); see also* :ref:`OEP-65 Frontend Composability <OEP-65 
   BFF is existing precedent), **not** by collapsing distinct resources into one
   multi-purpose endpoint.
 
+Convention 14: Standardize REST API URL structure
+-------------------------------------------------
+
+*Source:* `ADR 0038: Standardize REST API URL Structure <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0038-standardize-rest-api-url-structure.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0038-standardize-rest-api-url-structure.rst#code-examples>`__).
+
+Every REST API URL **MUST** match one canonical shape, so a client that knows one
+endpoint can infer the next and tooling can address resources it has not seen::
+
+   /api/{api_name}/v{N}/{collection}[/{identifier}[/{sub_collection}[/{sub_id}]]]/
+
+* **Leading** ``/api/`` **prefix.** Every programmatic endpoint lives under
+  ``/api/``, never mid-path. HTML views, XBlock runtime handlers, fixed-form authn
+  paths, and operational endpoints (``/heartbeat``) are out of scope.
+* **Singular API name, plural collections** (``/api/enrollment/v1/enrollments/``).
+  A resource gets exactly two base URLs: ``{collection}/`` and
+  ``{collection}/{identifier}/``.
+* **Name the domain, not the code.** The API name describes a subject area, not the
+  implementing Django app, package layout, or an MFE screen; each concept has one
+  name platform-wide.
+* **Lowercase** ``snake_case`` **segments** are concrete resource nouns, not
+  ``kebab-case``, abstract names (``items``, ``data``), or view/screen names.
+* **Version follows the API name and is major-only** (``v1``, never ``v0.5``, never
+  a leading ``/api/v1/...``). This fixes only the version's position and form;
+  versioning semantics stay with Convention 12.
+* **One route, one address.** The trailing slash is required and every ``re_path``
+  is anchored with ``^`` and ``$``.
+* **Hierarchy is logical, capped at one level of nesting.** Anything addressable by
+  its own opaque key is a top-level collection; the parent and all filtering,
+  sorting, and pagination live in the query string (Conventions 7-9). A parent key
+  **MUST NOT** occupy the member-identifier slot.
+* **Opaque-key identifiers**, resolved by shared path converters, never database
+  primary keys on an external API; the current user is addressed as ``me``.
+* **Verb-free resource paths**: an operation is a ``POST`` to a noun (Convention 3).
+* **One shared namespace across LMS and CMS.** A path served by both **MUST**
+  resolve to the same contract; ``{api_name}`` values are reserved platform-wide;
+  service-specific behavior is distinguished by name (``/api/authoring/v1/`` for
+  Studio, ``/api/course/v1/`` for the LMS), and each endpoint has one canonical
+  address. Each mount declares its own full ``/api/{api_name}/v{N}/`` prefix, and
+  Django URL names are unique, descriptive ``snake_case``.
+
+Existing endpoints migrate under :ref:`OEP-21 Deprecation and Removal <OEP-21 DEPR>`
+and are never broken: mount the conforming path alongside the legacy one, mark the
+legacy route ``deprecated: true``, and remove it after at least one named release.
+A CI check walks each service's composed URL resolver to enforce the
+machine-checkable rules.
+
 Rationale
 *********
 
-These conventions were developed as thirteen separate ADRs so each decision could
+These conventions were developed as fourteen separate ADRs so each decision could
 be reasoned about, reviewed, and merged against the code it affected. That
 granularity was valuable during authoring but, as community reviewers observed,
 made the overall picture hard to follow: "a bit confusing as to what info is found
@@ -564,9 +643,9 @@ Reference Implementation
 
 The reference implementation is the ongoing FC-0118 work in ``openedx-platform``,
 tracked under the umbrella issue `#38137
-<https://github.com/openedx/openedx-platform/issues/38137>`_ and recorded as ADRs
-``docs/decisions/0025`` through ``0037`` (plus the pointer ADR
-``openedx/core/djangoapps/oauth_dispatch/docs/decisions/0017``). Priority
+<https://github.com/openedx/openedx-platform/issues/38137>`_ and recorded as the
+ADRs in the `docs/decisions folder <https://github.com/openedx/openedx-platform/tree/master/docs/decisions>`__ (``0025`` through ``0038``, plus
+the `pointer ADR 0017 <https://github.com/openedx/openedx-platform/blob/master/openedx/core/djangoapps/oauth_dispatch/docs/decisions/0017-standardize-authentication-patterns.rst>`__). Priority
 migration targets identified by the ADRs include the Enrollment API ViewSet
 consolidation, the ``drf-spectacular`` rollout, the ``BearerAuthentication``
 deprecation via the ``view_auth_classes`` decorator, and the canonical
@@ -576,11 +655,11 @@ have representative, merged implementations across the highest-impact endpoints.
 Rejected Alternatives
 *********************
 
-Because this OEP consolidates thirteen ADRs, the full set of alternatives is
+Because this OEP consolidates fourteen ADRs, the full set of alternatives is
 recorded per-decision in the source ADRs. The most significant rejected
 alternatives are:
 
-* **Leaving the decisions as thirteen separate ADRs only.** Rejected in response to
+* **Leaving the decisions as fourteen separate ADRs only.** Rejected in response to
   community review requesting a single, clear conventions document.
 * **Adopting ``dataclasses``/``pydantic`` instead of DRF serializers** (Convention 1).
   Deferred: migrating from two existing patterns to a third adds complexity without
@@ -607,6 +686,6 @@ Change History
 2026-07-05
 ==========
 
-* Document created: consolidates ``openedx-platform`` ADRs 0025–0037 (FC-0118) into a
+* Document created: consolidates ``openedx-platform`` ADRs 0025–0038 (FC-0118) into a
   single REST API Conventions OEP.
-* `Pull request #XXX <https://github.com/openedx/openedx-proposals/pull/XXX>`_
+* `Pull request #805 <https://github.com/openedx/openedx-proposals/pull/805>`_
