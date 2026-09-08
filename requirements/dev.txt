@@ -12,7 +12,7 @@ alabaster==1.0.0
     # via
     #   -r requirements/base.txt
     #   sphinx
-anyio==4.14.2
+anyio==4.15.1
     # via
     #   starlette
     #   watchfiles
