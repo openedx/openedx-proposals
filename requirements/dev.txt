@@ -12,7 +12,7 @@ alabaster==1.0.0
     # via
     #   -r requirements/base.txt
     #   sphinx
-anyio==4.14.2
+anyio==4.15.1
     # via
     #   starlette
     #   watchfiles
@@ -145,7 +145,7 @@ urllib3==2.7.0
     # via
     #   -r requirements/base.txt
     #   requests
-uvicorn==0.52.4
+uvicorn==0.53.0
     # via sphinx-autobuild
 watchfiles==1.2.0
     # via sphinx-autobuild
