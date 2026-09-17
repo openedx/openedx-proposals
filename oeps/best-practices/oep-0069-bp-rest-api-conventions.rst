@@ -35,7 +35,7 @@ OEP-69: REST API Conventions
        * :ref:`OEP-4 Application Authorization (Scopes)`
        * :ref:`OEP-42 Authentication`
        * :ref:`OEP-66 User Authorization`
-       * :ref:`OEP-65 Frontend Composability <OEP-65 Frontend Composibility>`
+       * :ref:`OEP-65 Frontend Composability <OEP-65 Frontend Composability>`
        * :ref:`OEP-68 Content Identifiers <OEP-68 Learning Content Identifiers>`
        * :ref:`OEP-21 Deprecation and Removal <OEP-21 DEPR>`
 
@@ -522,7 +522,7 @@ Convention 12: Version every new API and enforce compatibility in CI
 Convention 13: One canonical front-end configuration endpoint; no per-user data on it
 -------------------------------------------------------------------------------------
 
-*Source:* `ADR 0035: Canonical MFE Configuration Endpoint <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0035-canonical-mfe-configuration-endpoint.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0035-canonical-mfe-configuration-endpoint.rst#code-example-configuration-endpoint-vs-user-context-resources>`__; partially supersedes the MFE Config API ADR 0001). See also :ref:`OEP-65 Frontend Composability <OEP-65 Frontend Composibility>`.
+*Source:* `ADR 0035: Canonical MFE Configuration Endpoint <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0035-canonical-mfe-configuration-endpoint.rst>`__ (`code example <https://github.com/openedx/openedx-platform/blob/master/docs/decisions/0035-canonical-mfe-configuration-endpoint.rst#code-example-configuration-endpoint-vs-user-context-resources>`__; partially supersedes the MFE Config API ADR 0001). See also :ref:`OEP-65 Frontend Composability <OEP-65 Frontend Composability>`.
 
 * ``/api/frontend_site_config/v1/`` (``FrontendSiteConfigView``, aligned with
   frontend-base's ``SiteConfig`` under OEP-65) is the **canonical** MFE / front-end
