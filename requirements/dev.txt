@@ -44,7 +44,7 @@ docutils==0.22.4
     #   sphinx
 h11==0.16.0
     # via uvicorn
-idna==3.19
+idna==3.20
     # via
     #   -r requirements/base.txt
     #   anyio
@@ -141,13 +141,13 @@ typing-extensions==4.16.0
     #   anyio
     #   beautifulsoup4
     #   starlette
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   -r requirements/base.txt
     #   requests
 uvicorn==0.53.0
     # via sphinx-autobuild
-watchfiles==1.2.0
+watchfiles==1.3.0
     # via sphinx-autobuild
 websockets==17.1
     # via sphinx-autobuild
