@@ -22,7 +22,7 @@ docutils==0.22.4
     # via
     #   pydata-sphinx-theme
     #   sphinx
-idna==3.19
+idna==3.20
     # via requests
 imagesize==2.0.1
     # via sphinx
@@ -78,5 +78,5 @@ sphinxext-rediraffe==0.3.0
     # via -r requirements/base.in
 typing-extensions==4.16.0
     # via beautifulsoup4
-urllib3==2.7.0
+urllib3==2.8.0
     # via requests
