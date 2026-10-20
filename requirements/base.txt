@@ -14,7 +14,7 @@ babel==2.18.0
     #   sphinx
 beautifulsoup4==4.15.0
     # via pydata-sphinx-theme
-certifi==2026.7.22
+certifi==2026.10.19
     # via requests
 charset-normalizer==3.5.2
     # via requests
@@ -51,7 +51,7 @@ snowballstemmer==3.1.1
     # via sphinx
 soupsieve==3.0.3
     # via beautifulsoup4
-sphinx==9.1.0
+sphinx==9.1.1
     # via
     #   -r requirements/base.in
     #   pydata-sphinx-theme
