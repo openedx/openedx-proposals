@@ -7,12 +7,12 @@
 packaging==26.3
     # via wheel
 wheel==0.48.0
-    # via -r requirements/pip.in
+    # via -r pip.in
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==26.2.2
     # via
-    #   -c requirements/common_constraints.txt
-    #   -r requirements/pip.in
-setuptools==84.0.0
-    # via -r requirements/pip.in
+    #   -c common_constraints.txt
+    #   -r pip.in
+setuptools==84.1.0
+    # via -r pip.in
